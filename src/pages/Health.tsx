@@ -1,11 +1,19 @@
 
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import HealthMetricCard from '@/components/HealthMetricCard';
+import HealthTimeline from '@/components/HealthTimeline';
 import Navigation from '@/components/Navigation';
 
 const Health = () => {
+  const [selectedMetric, setSelectedMetric] = useState<{
+    title: string;
+    unit: string;
+    type: 'daily' | 'lab';
+  } | null>(null);
+
   const healthMetrics = [
     { title: 'Blood Pressure', value: '120/80', unit: 'mmHg', trend: 'stable' as const, normal: true },
     { title: 'Weight', value: '165', unit: 'lbs', trend: 'down' as const, normal: true },
@@ -18,6 +26,23 @@ const Health = () => {
     { title: 'Total Cholesterol', value: '180', unit: 'mg/dL', trend: 'stable' as const, normal: true },
     { title: 'HDL-C', value: '55', unit: 'mg/dL', trend: 'up' as const, normal: true },
   ];
+
+  const handleMetricClick = (title: string, unit: string, type: 'daily' | 'lab') => {
+    setSelectedMetric({ title, unit, type });
+  };
+
+  const handleBackToHealth = () => {
+    setSelectedMetric(null);
+  };
+
+  if (selectedMetric) {
+    return (
+      <HealthTimeline 
+        metric={selectedMetric} 
+        onBack={handleBackToHealth}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -50,14 +75,19 @@ const Health = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Daily Metrics</h2>
           <div className="grid grid-cols-2 gap-4">
             {healthMetrics.map((metric, index) => (
-              <HealthMetricCard
+              <div 
                 key={index}
-                title={metric.title}
-                value={metric.value}
-                unit={metric.unit}
-                trend={metric.trend}
-                normal={metric.normal}
-              />
+                onClick={() => handleMetricClick(metric.title, metric.unit, 'daily')}
+                className="cursor-pointer"
+              >
+                <HealthMetricCard
+                  title={metric.title}
+                  value={metric.value}
+                  unit={metric.unit}
+                  trend={metric.trend}
+                  normal={metric.normal}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -66,14 +96,19 @@ const Health = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Lab Results</h2>
           <div className="grid grid-cols-1 gap-4">
             {labResults.map((result, index) => (
-              <HealthMetricCard
+              <div 
                 key={index}
-                title={result.title}
-                value={result.value}
-                unit={result.unit}
-                trend={result.trend}
-                normal={result.normal}
-              />
+                onClick={() => handleMetricClick(result.title, result.unit, 'lab')}
+                className="cursor-pointer"
+              >
+                <HealthMetricCard
+                  title={result.title}
+                  value={result.value}
+                  unit={result.unit}
+                  trend={result.trend}
+                  normal={result.normal}
+                />
+              </div>
             ))}
           </div>
         </div>
