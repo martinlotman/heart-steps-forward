@@ -13,6 +13,12 @@ const Health = () => {
     { title: 'Steps Today', value: '8,420', unit: 'steps', trend: 'up' as const, normal: true },
   ];
 
+  const labResults = [
+    { title: 'LDL-C', value: '85', unit: 'mg/dL', trend: 'down' as const, normal: true },
+    { title: 'Total Cholesterol', value: '180', unit: 'mg/dL', trend: 'stable' as const, normal: true },
+    { title: 'HDL-C', value: '55', unit: 'mg/dL', trend: 'up' as const, normal: true },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="bg-white shadow-sm">
@@ -40,17 +46,36 @@ const Health = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {healthMetrics.map((metric, index) => (
-            <HealthMetricCard
-              key={index}
-              title={metric.title}
-              value={metric.value}
-              unit={metric.unit}
-              trend={metric.trend}
-              normal={metric.normal}
-            />
-          ))}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Daily Metrics</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {healthMetrics.map((metric, index) => (
+              <HealthMetricCard
+                key={index}
+                title={metric.title}
+                value={metric.value}
+                unit={metric.unit}
+                trend={metric.trend}
+                normal={metric.normal}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Lab Results</h2>
+          <div className="grid grid-cols-1 gap-4">
+            {labResults.map((result, index) => (
+              <HealthMetricCard
+                key={index}
+                title={result.title}
+                value={result.value}
+                unit={result.unit}
+                trend={result.trend}
+                normal={result.normal}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="mt-8">
@@ -61,6 +86,9 @@ const Health = () => {
             </Button>
             <Button variant="outline" className="w-full justify-start">
               Record Weight
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              Add Lab Results
             </Button>
             <Button variant="outline" className="w-full justify-start">
               Track Symptoms
