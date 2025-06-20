@@ -14,9 +14,20 @@ interface HealthTimelineProps {
   onBack: () => void;
 }
 
+interface BaseDataEntry {
+  date: string;
+  value: number;
+  trend: string;
+}
+
+interface BloodPressureEntry extends BaseDataEntry {
+  systolic?: number;
+  diastolic?: number;
+}
+
 const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
   // Sample historical data - in a real app, this would come from a database
-  const getHistoricalData = () => {
+  const getHistoricalData = (): (BaseDataEntry | BloodPressureEntry)[] => {
     const baseData = {
       'Blood Pressure': [
         { date: '2024-01-15', value: 125, systolic: 125, diastolic: 82, trend: 'up' },
@@ -162,7 +173,7 @@ const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
                         {entry.value}
                       </span>
                       <span className="text-sm text-gray-500 ml-1">{metric.unit}</span>
-                      {metric.title === 'Blood Pressure' && entry.systolic && entry.diastolic && (
+                      {metric.title === 'Blood Pressure' && 'systolic' in entry && 'diastolic' in entry && (
                         <span className="text-sm text-gray-500 ml-1">
                           ({entry.systolic}/{entry.diastolic})
                         </span>

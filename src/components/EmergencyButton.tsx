@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 const EmergencyButton = () => {
   const handleEmergencyCall = () => {
-    window.location.href = 'tel:911';
+    window.location.href = 'tel:112';
   };
 
   return (
@@ -13,7 +13,7 @@ const EmergencyButton = () => {
       className="w-full bg-red-600 hover:bg-red-700 text-white py-4 text-lg font-semibold rounded-xl shadow-lg"
     >
       <Phone className="mr-2" size={20} />
-      Emergency Call 911
+      Emergency Call 112
     </Button>
   );
 };
