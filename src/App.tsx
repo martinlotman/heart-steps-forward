@@ -11,6 +11,7 @@ import Medications from "./pages/Medications";
 import Health from "./pages/Health";
 import Education from "./pages/Education";
 import Profile from "./pages/Profile";
+import HealthJourney from "./pages/HealthJourney";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => {
             <Route path="/health" element={<Health />} />
             <Route path="/education" element={<Education />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/health-journey" element={<HealthJourney />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

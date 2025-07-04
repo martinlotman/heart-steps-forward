@@ -15,7 +15,7 @@ const Index = () => {
   });
 
   const quickStats = [
-    { label: 'Days since MI', value: '45', icon: Heart },
+    { label: 'Days since MI', value: '45', icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: '2/4', icon: Calendar },
     { label: 'Recovery score', value: '85%', icon: TrendingUp },
   ];
@@ -65,13 +65,25 @@ const Index = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {quickStats.map((stat, index) => (
-            <Card key={index} className="text-center">
-              <CardContent className="p-4">
-                <stat.icon className="mx-auto mb-2 text-blue-600" size={24} />
-                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                <p className="text-xs text-gray-600">{stat.label}</p>
-              </CardContent>
-            </Card>
+            stat.link ? (
+              <Link key={index} to={stat.link}>
+                <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4">
+                    <stat.icon className="mx-auto mb-2 text-blue-600" size={24} />
+                    <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                    <p className="text-xs text-gray-600">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ) : (
+              <Card key={index} className="text-center">
+                <CardContent className="p-4">
+                  <stat.icon className="mx-auto mb-2 text-blue-600" size={24} />
+                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-xs text-gray-600">{stat.label}</p>
+                </CardContent>
+              </Card>
+            )
           ))}
         </div>
 
