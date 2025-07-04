@@ -55,7 +55,7 @@ export class NotificationService {
 
   static async cancelMedicationReminder(id: number) {
     await LocalNotifications.cancel({
-      notifications: [{ id: id.toString() }]
+      notifications: [{ id: id }]
     });
   }
 
