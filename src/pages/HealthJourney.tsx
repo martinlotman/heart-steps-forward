@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 
 interface DayProgress {
@@ -17,7 +17,8 @@ interface DayProgress {
 }
 
 const HealthJourney = () => {
-  // Mock data for 45 days since MI
+  const [selectedDay, setSelectedDay] = useState<DayProgress | null>(null);
+  
   const [journeyData] = useState<DayProgress[]>(() => {
     const data: DayProgress[] = [];
     const today = new Date();
@@ -72,6 +73,14 @@ const HealthJourney = () => {
       case 'partial': return '○';
       default: return '×';
     }
+  };
+
+  const handleDayClick = (day: DayProgress) => {
+    setSelectedDay(day);
+  };
+
+  const closeModal = () => {
+    setSelectedDay(null);
   };
 
   return (
@@ -133,7 +142,7 @@ const HealthJourney = () => {
                 <div
                   key={day.day}
                   className={`relative aspect-square rounded-full border-2 flex items-center justify-center text-white font-bold text-xs transition-all hover:scale-110 cursor-pointer ${getStatusColor(day.status)}`}
-                  title={`Day ${day.day} (${day.date}): ${day.medicationsTaken}/${day.totalMedications} meds, Steps: ${day.stepsLogged ? 'Yes' : 'No'}, Vitals: ${day.vitalsLogged ? 'Yes' : 'No'}`}
+                  onClick={() => handleDayClick(day)}
                 >
                   <span className="text-xs">{getStatusIcon(day.status)}</span>
                   <div className="absolute -bottom-6 text-xs text-gray-600 font-normal">
@@ -166,6 +175,54 @@ const HealthJourney = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal for Day Details */}
+      {selectedDay && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Day {selectedDay.day} Details</h3>
+              <Button variant="ghost" size="icon" onClick={closeModal}>
+                <X size={20} />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">{selectedDay.date}</div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Medications Taken</span>
+                  <span className={`text-sm font-medium ${selectedDay.medicationsTaken === selectedDay.totalMedications ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.medicationsTaken}/{selectedDay.totalMedications}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Steps Logged</span>
+                  <span className={`text-sm font-medium ${selectedDay.stepsLogged ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.stepsLogged ? '✓ Yes' : '× No'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Vitals Logged</span>
+                  <span className={`text-sm font-medium ${selectedDay.vitalsLogged ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.vitalsLogged ? '✓ Yes' : '× No'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <div className="flex items-center">
+                  <div className={`w-4 h-4 rounded-full mr-2 ${getStatusColor(selectedDay.status)}`}></div>
+                  <span className="text-sm font-medium capitalize">{selectedDay.status} Day</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </div>
