@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Heart, Calendar, TrendingUp, BookOpen, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Calendar, TrendingUp, BookOpen, Bell, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,70 @@ const Index = () => {
     timeUntil: '1 hour'
   });
 
+  // Daily task completion state
+  const [dailyTasks, setDailyTasks] = useState({
+    medications: false,
+    health: false,
+    education: false
+  });
+
+  // Load today's task completion from localStorage
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const savedTasks = localStorage.getItem(`dailyTasks_${today}`);
+    if (savedTasks) {
+      setDailyTasks(JSON.parse(savedTasks));
+    }
+  }, []);
+
+  // Save task completion to localStorage and update health journey
+  const updateTaskCompletion = (taskType: 'medications' | 'health' | 'education', completed: boolean) => {
+    const newTasks = { ...dailyTasks, [taskType]: completed };
+    setDailyTasks(newTasks);
+    
+    const today = new Date().toDateString();
+    localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(newTasks));
+    
+    // Check if all tasks are completed and update health journey
+    const allCompleted = newTasks.medications && newTasks.health && newTasks.education;
+    if (allCompleted) {
+      localStorage.setItem(`healthJourney_${today}`, 'complete');
+    }
+  };
+
+  const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education;
+
   const quickStats = [
     { label: 'Days since MI', value: '45', icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: '2/4', icon: Calendar },
     { label: 'Recovery score', value: '85%', icon: TrendingUp },
+  ];
+
+  const dailyTaskItems = [
+    {
+      to: "/medications",
+      icon: Calendar,
+      title: "Take Medications",
+      description: "Mark your daily medications as taken",
+      completed: dailyTasks.medications,
+      taskType: "medications" as const
+    },
+    {
+      to: "/health",
+      icon: Heart,
+      title: "Log Health Metrics",
+      description: "Record BP, weight, and symptoms",
+      completed: dailyTasks.health,
+      taskType: "health" as const
+    },
+    {
+      to: "/education",
+      icon: BookOpen,
+      title: "Complete Learning",
+      description: "Read today's heart-healthy tip",
+      completed: dailyTasks.education,
+      taskType: "education" as const
+    }
   ];
 
   return (
@@ -87,51 +147,54 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Daily Tasks Progress */}
+        {allTasksCompleted && (
+          <Card className="mb-4 bg-green-50 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center text-green-700">
+                <Check className="mr-2" size={20} />
+                <span className="font-medium">All daily tasks completed! Great job! 🎉</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Daily Tasks */}
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Daily Tasks</h2>
           
-          <Link to="/medications">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <Calendar className="text-blue-600 mr-4" size={24} />
-                  <div>
-                    <h3 className="font-medium text-gray-800">View Medications</h3>
-                    <p className="text-sm text-gray-500">Track your daily medications</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/health">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <Heart className="text-red-500 mr-4" size={24} />
-                  <div>
-                    <h3 className="font-medium text-gray-800">Log Health Metrics</h3>
-                    <p className="text-sm text-gray-500">Record BP, weight, and symptoms</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/education">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <BookOpen className="text-green-600 mr-4" size={24} />
-                  <div>
-                    <h3 className="font-medium text-gray-800">Education Center</h3>
-                    <p className="text-sm text-gray-500">Learn about heart-healthy living</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          {dailyTaskItems.map((task, index) => (
+            <div key={index} className="relative">
+              <Link to={task.to}>
+                <Card className={`hover:shadow-md transition-all cursor-pointer ${
+                  task.completed 
+                    ? 'bg-green-50 border-green-200 shadow-sm' 
+                    : 'hover:shadow-md'
+                }`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <task.icon className={`mr-4 ${
+                          task.completed ? 'text-green-600' : task.to === '/medications' ? 'text-blue-600' : task.to === '/health' ? 'text-red-500' : 'text-green-600'
+                        }`} size={24} />
+                        <div>
+                          <h3 className={`font-medium ${
+                            task.completed ? 'text-green-800' : 'text-gray-800'
+                          }`}>{task.title}</h3>
+                          <p className={`text-sm ${
+                            task.completed ? 'text-green-600' : 'text-gray-500'
+                          }`}>{task.description}</p>
+                        </div>
+                      </div>
+                      {task.completed && (
+                        <Check className="text-green-600" size={20} />
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -14,6 +14,7 @@ interface DayProgress {
   stepsLogged: boolean;
   vitalsLogged: boolean;
   status: 'complete' | 'partial' | 'incomplete';
+  dailyTasksCompleted?: boolean;
 }
 
 const HealthJourney = () => {
@@ -26,6 +27,10 @@ const HealthJourney = () => {
     for (let i = 44; i >= 0; i--) {
       const date = new Date();
       date.setDate(today.getDate() - i);
+      const dateString = date.toDateString();
+      
+      // Check if this day had all daily tasks completed
+      const dailyTasksCompleted = localStorage.getItem(`healthJourney_${dateString}`) === 'complete';
       
       // Mock some realistic progress data
       const medicationsTaken = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 1 : 0;
@@ -34,7 +39,11 @@ const HealthJourney = () => {
       const vitalsLogged = Math.random() > 0.5;
       
       let status: 'complete' | 'partial' | 'incomplete' = 'incomplete';
-      if (medicationsTaken === totalMedications && stepsLogged && vitalsLogged) {
+      
+      // If daily tasks were completed, mark as complete
+      if (dailyTasksCompleted) {
+        status = 'complete';
+      } else if (medicationsTaken === totalMedications && stepsLogged && vitalsLogged) {
         status = 'complete';
       } else if (medicationsTaken > 0 || stepsLogged || vitalsLogged) {
         status = 'partial';
@@ -47,7 +56,8 @@ const HealthJourney = () => {
         totalMedications,
         stepsLogged,
         vitalsLogged,
-        status
+        status,
+        dailyTasksCompleted
       });
     }
     
@@ -189,6 +199,14 @@ const HealthJourney = () => {
             
             <div className="space-y-4">
               <div className="text-sm text-gray-600">{selectedDay.date}</div>
+              
+              {selectedDay.dailyTasksCompleted && (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center text-green-700">
+                    <span className="text-sm font-medium">✓ All daily tasks completed!</span>
+                  </div>
+                </div>
+              )}
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
