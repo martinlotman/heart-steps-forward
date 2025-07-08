@@ -26,7 +26,19 @@ const Index = () => {
     const today = new Date().toDateString();
     const savedTasks = localStorage.getItem(`dailyTasks_${today}`);
     if (savedTasks) {
-      setDailyTasks(JSON.parse(savedTasks));
+      const tasks = JSON.parse(savedTasks);
+      setDailyTasks(tasks);
+    } else {
+      // Check if education tasks are completed via lifestyle tasks
+      const savedLifestyleTasks = localStorage.getItem(`completedLifestyleTasks_${today}`);
+      if (savedLifestyleTasks) {
+        const completedLifestyleTasks = JSON.parse(savedLifestyleTasks);
+        if (completedLifestyleTasks.length > 0) {
+          const updatedTasks = { ...dailyTasks, education: true };
+          setDailyTasks(updatedTasks);
+          localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(updatedTasks));
+        }
+      }
     }
   }, []);
 
@@ -74,7 +86,7 @@ const Index = () => {
       to: "/education",
       icon: BookOpen,
       title: "Complete Learning",
-      description: "Read today's heart-healthy tip",
+      description: "Complete lifestyle recommendations",
       completed: dailyTasks.education,
       taskType: "education" as const
     }
