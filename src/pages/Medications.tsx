@@ -1,10 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Bell, BellOff } from 'lucide-react';
+import { ArrowLeft, Bell, BellOff, Calendar as CalendarIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MedicationCard from '@/components/MedicationCard';
+import AddMedicationDialog from '@/components/AddMedicationDialog';
+import MedicationCalendar from '@/components/MedicationCalendar';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NotificationService } from '@/services/notificationService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +18,8 @@ interface Medication {
   time: string;
   taken: boolean;
   notificationsEnabled: boolean;
+  startDate?: Date;
+  frequency?: string;
 }
 
 const Medications = () => {
@@ -25,6 +30,32 @@ const Medications = () => {
     { id: 3, name: 'Atorvastatin', dosage: '20mg', time: '8:00 PM', taken: false, notificationsEnabled: false },
     { id: 4, name: 'Aspirin', dosage: '81mg', time: '8:00 AM', taken: true, notificationsEnabled: false },
   ]);
+
+  const handleAddMedication = (newMed: {
+    name: string;
+    dosage: string;
+    time: string;
+    startDate: Date;
+    frequency: string;
+  }) => {
+    const medication: Medication = {
+      id: Date.now(), // Simple ID generation
+      name: newMed.name,
+      dosage: newMed.dosage,
+      time: newMed.time,
+      taken: false,
+      notificationsEnabled: false,
+      startDate: newMed.startDate,
+      frequency: newMed.frequency,
+    };
+
+    setMedications(prev => [...prev, medication]);
+    
+    toast({
+      title: "Medication added",
+      description: `${newMed.name} has been scheduled for ${newMed.time}`,
+    });
+  };
 
   const handleMarkTaken = (id: number) => {
     setMedications(prev => 
@@ -97,44 +128,62 @@ const Medications = () => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="mb-6">
-          <p className="text-sm text-gray-600 mb-2">Today's Schedule</p>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-blue-800 font-medium">
-              {medications.filter(med => med.taken).length} of {medications.length} medications taken
-            </p>
-          </div>
-        </div>
+        <AddMedicationDialog onAddMedication={handleAddMedication} />
 
-        <div className="space-y-4">
-          {medications.map(medication => (
-            <div key={medication.id} className="relative">
-              <MedicationCard
-                name={medication.name}
-                dosage={medication.dosage}
-                time={medication.time}
-                taken={medication.taken}
-                onMarkTaken={() => handleMarkTaken(medication.id)}
-              />
-              <Button
-                onClick={() => handleToggleNotifications(medication.id)}
-                variant="outline"
-                size="sm"
-                className={`absolute top-3 right-3 ${
-                  medication.notificationsEnabled 
-                    ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                    : 'bg-gray-50 border-gray-200 text-gray-500'
-                }`}
-              >
-                {medication.notificationsEnabled ? (
-                  <Bell size={16} />
-                ) : (
-                  <BellOff size={16} />
-                )}
-              </Button>
+        <Tabs defaultValue="today" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="today">Today's Meds</TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarIcon className="mr-2" size={16} />
+              Calendar
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="today" className="space-y-4">
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 mb-2">Today's Schedule</p>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-blue-800 font-medium">
+                  {medications.filter(med => med.taken).length} of {medications.length} medications taken
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-4">
+              {medications.map(medication => (
+                <div key={medication.id} className="relative">
+                  <MedicationCard
+                    name={medication.name}
+                    dosage={medication.dosage}
+                    time={medication.time}
+                    taken={medication.taken}
+                    onMarkTaken={() => handleMarkTaken(medication.id)}
+                  />
+                  <Button
+                    onClick={() => handleToggleNotifications(medication.id)}
+                    variant="outline"
+                    size="sm"
+                    className={`absolute top-3 right-3 ${
+                      medication.notificationsEnabled 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'bg-gray-50 border-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {medication.notificationsEnabled ? (
+                      <Bell size={16} />
+                    ) : (
+                      <BellOff size={16} />
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="calendar">
+            <MedicationCalendar medications={medications} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Navigation />
