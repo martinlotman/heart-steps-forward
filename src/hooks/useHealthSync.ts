@@ -10,6 +10,11 @@ export const useHealthSync = () => {
   const [todaysActivity, setTodaysActivity] = useState<HealthActivity[]>([]);
   const { toast } = useToast();
 
+  // Check if already connected on mount
+  useEffect(() => {
+    setIsConnected(healthDataService.isHealthConnected());
+  }, []);
+
   const connectHealthData = async () => {
     setIsLoading(true);
     try {
