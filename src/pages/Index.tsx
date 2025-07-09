@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Heart, Calendar, TrendingUp, BookOpen, Bell, Check } from 'lucide-react';
+import { Heart, Calendar, TrendingUp, BookOpen, Bell, Check, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const Index = () => {
   const quickStats = [
     { label: 'Days since MI', value: '45', icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: '2/4', icon: Calendar },
-    { label: 'Recovery score', value: '85%', icon: TrendingUp },
+    { label: 'Physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
   ];
 
   const dailyTaskItems = [

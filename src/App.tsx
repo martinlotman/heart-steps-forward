@@ -12,6 +12,7 @@ import Health from "./pages/Health";
 import Education from "./pages/Education";
 import Profile from "./pages/Profile";
 import HealthJourney from "./pages/HealthJourney";
+import PhysicalActivity from "./pages/PhysicalActivity";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => {
             <Route path="/education" element={<Education />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/health-journey" element={<HealthJourney />} />
+            <Route path="/physical-activity" element={<PhysicalActivity />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
