@@ -13,6 +13,7 @@ interface DayProgress {
   totalMedications: number;
   stepsLogged: boolean;
   vitalsLogged: boolean;
+  physicalActivityLogged: boolean;
   status: 'complete' | 'partial' | 'incomplete';
   dailyTasksCompleted?: boolean;
 }
@@ -32,20 +33,25 @@ const HealthJourney = () => {
       // Check if this day had all daily tasks completed
       const dailyTasksCompleted = localStorage.getItem(`healthJourney_${dateString}`) === 'complete';
       
+      // Check daily tasks completion
+      const savedTasks = localStorage.getItem(`dailyTasks_${dateString}`);
+      const tasks = savedTasks ? JSON.parse(savedTasks) : {};
+      
       // Mock some realistic progress data
       const medicationsTaken = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 1 : 0;
       const totalMedications = 4;
-      const stepsLogged = Math.random() > 0.4;
-      const vitalsLogged = Math.random() > 0.5;
+      const stepsLogged = Math.random() > 0.4 || tasks.physicalActivity;
+      const vitalsLogged = Math.random() > 0.5 || tasks.health;
+      const physicalActivityLogged = tasks.physicalActivity || Math.random() > 0.6;
       
       let status: 'complete' | 'partial' | 'incomplete' = 'incomplete';
       
       // If daily tasks were completed, mark as complete
       if (dailyTasksCompleted) {
         status = 'complete';
-      } else if (medicationsTaken === totalMedications && stepsLogged && vitalsLogged) {
+      } else if (medicationsTaken === totalMedications && stepsLogged && vitalsLogged && physicalActivityLogged) {
         status = 'complete';
-      } else if (medicationsTaken > 0 || stepsLogged || vitalsLogged) {
+      } else if (medicationsTaken > 0 || stepsLogged || vitalsLogged || physicalActivityLogged) {
         status = 'partial';
       }
       
@@ -56,6 +62,7 @@ const HealthJourney = () => {
         totalMedications,
         stepsLogged,
         vitalsLogged,
+        physicalActivityLogged,
         status,
         dailyTasksCompleted
       });
@@ -171,7 +178,7 @@ const HealthJourney = () => {
             <div className="space-y-2">
               <div className="flex items-center">
                 <div className="w-6 h-6 rounded-full bg-green-400 border-2 border-green-500 flex items-center justify-center text-white text-xs font-bold mr-3">✓</div>
-                <span className="text-sm">Perfect day - All tasks completed</span>
+                <span className="text-sm">Perfect day - All tasks completed (meds, vitals, activity, education)</span>
               </div>
               <div className="flex items-center">
                 <div className="w-6 h-6 rounded-full bg-yellow-400 border-2 border-yellow-500 flex items-center justify-center text-white text-xs font-bold mr-3">○</div>
@@ -227,6 +234,13 @@ const HealthJourney = () => {
                   <span className="text-sm">Vitals Logged</span>
                   <span className={`text-sm font-medium ${selectedDay.vitalsLogged ? 'text-green-600' : 'text-red-600'}`}>
                     {selectedDay.vitalsLogged ? '✓ Yes' : '× No'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Physical Activity</span>
+                  <span className={`text-sm font-medium ${selectedDay.physicalActivityLogged ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.physicalActivityLogged ? '✓ Tracked' : '× Not tracked'}
                   </span>
                 </div>
               </div>

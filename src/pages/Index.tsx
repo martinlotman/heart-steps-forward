@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Heart, Calendar, TrendingUp, BookOpen, Bell, Check, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -18,7 +17,8 @@ const Index = () => {
   const [dailyTasks, setDailyTasks] = useState({
     medications: false,
     health: false,
-    education: false
+    education: false,
+    physicalActivity: false
   });
 
   // Load today's task completion from localStorage
@@ -43,7 +43,7 @@ const Index = () => {
   }, []);
 
   // Save task completion to localStorage and update health journey
-  const updateTaskCompletion = (taskType: 'medications' | 'health' | 'education', completed: boolean) => {
+  const updateTaskCompletion = (taskType: 'medications' | 'health' | 'education' | 'physicalActivity', completed: boolean) => {
     const newTasks = { ...dailyTasks, [taskType]: completed };
     setDailyTasks(newTasks);
     
@@ -51,13 +51,13 @@ const Index = () => {
     localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(newTasks));
     
     // Check if all tasks are completed and update health journey
-    const allCompleted = newTasks.medications && newTasks.health && newTasks.education;
+    const allCompleted = newTasks.medications && newTasks.health && newTasks.education && newTasks.physicalActivity;
     if (allCompleted) {
       localStorage.setItem(`healthJourney_${today}`, 'complete');
     }
   };
 
-  const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education;
+  const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education && dailyTasks.physicalActivity;
 
   const quickStats = [
     { label: 'Days since MI', value: '45', icon: Heart, link: '/health-journey' },

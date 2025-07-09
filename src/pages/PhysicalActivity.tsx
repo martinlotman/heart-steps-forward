@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Activity, Target, TrendingUp, Plus, Check, Clock } from 'lucide-react';
+import { ArrowLeft, Activity, Target, TrendingUp, Plus, Check, Clock, Smartphone, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import Navigation from '@/components/Navigation';
+import { useHealthSync } from '@/hooks/useHealthSync';
 
 interface ActivityGoal {
   id: string;
@@ -27,6 +28,16 @@ interface ActivityRecommendation {
 }
 
 const PhysicalActivity = () => {
+  const { 
+    isConnected, 
+    isLoading, 
+    lastSync, 
+    connectHealthData, 
+    syncHealthData, 
+    getTodaysSteps, 
+    getTodaysCalories 
+  } = useHealthSync();
+
   const [goals, setGoals] = useState<ActivityGoal[]>([
     {
       id: '1',
@@ -102,6 +113,20 @@ const PhysicalActivity = () => {
     { day: 'Sun', minutes: 0 }
   ]);
 
+  useEffect(() => {
+    if (isConnected) {
+      const healthSteps = getTodaysSteps();
+      const healthCalories = getTodaysCalories();
+      
+      setGoals(prev => prev.map(goal => {
+        if (goal.type === 'steps') {
+          return { ...goal, current: healthSteps };
+        }
+        return goal;
+      }));
+    }
+  }, [isConnected, getTodaysSteps, getTodaysCalories]);
+
   const updateGoalProgress = (goalId: string, newValue: number) => {
     setGoals(goals.map(goal => 
       goal.id === goalId ? { ...goal, current: Math.min(newValue, goal.target) } : goal
@@ -145,6 +170,60 @@ const PhysicalActivity = () => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
+        {/* Health Data Connection Card */}
+        {!isConnected && (
+          <Card className="mb-6 border-l-4 border-l-blue-500 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Smartphone className="mr-3 text-blue-600" size={20} />
+                  <div>
+                    <h3 className="font-medium text-blue-800">Connect Health Data</h3>
+                    <p className="text-sm text-blue-600">Sync with Google Fit or Apple Health</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={connectHealthData}
+                  disabled={isLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isLoading ? "Connecting..." : "Connect"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Health Data Status */}
+        {isConnected && (
+          <Card className="mb-4 bg-green-50 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Check className="mr-2 text-green-600" size={16} />
+                  <span className="text-sm font-medium text-green-800">Health data connected</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {lastSync && (
+                    <Badge variant="outline" className="text-xs">
+                      Last sync: {lastSync.toLocaleTimeString()}
+                    </Badge>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={syncHealthData}
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className={`mr-1 ${isLoading ? 'animate-spin' : ''}`} size={12} />
+                    Sync
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -159,12 +238,20 @@ const PhysicalActivity = () => {
                 <CardTitle className="text-lg flex items-center">
                   <Activity className="mr-2 text-blue-600" size={20} />
                   Today's Activity
+                  {isConnected && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      <Smartphone size={10} className="mr-1" />
+                      Synced
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">5,420</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {isConnected ? getTodaysSteps().toLocaleString() : '5,420'}
+                    </p>
                     <p className="text-xs text-gray-500">Steps</p>
                   </div>
                   <div className="text-center">
@@ -172,7 +259,9 @@ const PhysicalActivity = () => {
                     <p className="text-xs text-gray-500">Active min</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600">180</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {isConnected ? getTodaysCalories() : '180'}
+                    </p>
                     <p className="text-xs text-gray-500">Calories</p>
                   </div>
                 </div>
