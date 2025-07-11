@@ -1,7 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { healthDataService, HealthActivity } from '@/services/healthDataService';
+import { healthActivityService } from '@/services/healthActivityService';
+import { dailyTasksService } from '@/services/dailyTasksService';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useHealthSync = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -9,6 +12,7 @@ export const useHealthSync = () => {
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [todaysActivity, setTodaysActivity] = useState<HealthActivity[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Check if already connected on mount
   useEffect(() => {
@@ -59,15 +63,29 @@ export const useHealthSync = () => {
   };
 
   const syncHealthData = async () => {
-    if (!isConnected) return;
+    if (!isConnected || !user) return;
 
     try {
       const activityData = await healthDataService.syncTodaysActivity();
       setTodaysActivity(activityData);
       setLastSync(new Date());
       
+      // Save activity data to Supabase
+      const healthActivities = activityData.map(activity => ({
+        activityType: activity.type as 'steps' | 'calories' | 'distance' | 'exercise',
+        value: activity.value,
+        unit: activity.unit || (activity.type === 'steps' ? 'steps' : 'kcal'),
+        startDate: new Date(),
+        endDate: new Date(),
+        source: 'manual' as const
+      }));
+
+      if (healthActivities.length > 0) {
+        await healthActivityService.saveBulkHealthActivities(healthActivities, user.id);
+      }
+      
       // Update health journey with activity data
-      updateHealthJourney(activityData);
+      await updateHealthJourney(activityData);
       
       return activityData;
     } catch (error) {
@@ -80,24 +98,33 @@ export const useHealthSync = () => {
     }
   };
 
-  const updateHealthJourney = (activities: HealthActivity[]) => {
-    const today = new Date().toDateString();
+  const updateHealthJourney = async (activities: HealthActivity[]) => {
+    if (!user) return;
+    
+    const today = new Date().toISOString().split('T')[0];
     const hasSteps = activities.some(activity => activity.type === 'steps' && activity.value > 0);
     const hasCalories = activities.some(activity => activity.type === 'calories' && activity.value > 0);
     
     if (hasSteps || hasCalories) {
-      // Mark physical activity as logged for today
-      const existingTasks = localStorage.getItem(`dailyTasks_${today}`);
-      const tasks = existingTasks ? JSON.parse(existingTasks) : { medications: false, health: false, education: false };
-      
-      // Update physical activity tracking
-      const updatedTasks = { ...tasks, physicalActivity: true };
-      localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(updatedTasks));
-      
-      // Update health journey status
-      const allCompleted = updatedTasks.medications && updatedTasks.health && updatedTasks.education && updatedTasks.physicalActivity;
-      if (allCompleted) {
-        localStorage.setItem(`healthJourney_${today}`, 'complete');
+      try {
+        // Update physical activity task in Supabase
+        await dailyTasksService.updateDailyTask(today, 'physical_activity', true, user.id);
+        
+        // Update local storage for compatibility
+        const existingTasks = localStorage.getItem(`dailyTasks_${today}`);
+        const tasks = existingTasks ? JSON.parse(existingTasks) : { medications: false, health: false, education: false };
+        
+        const updatedTasks = { ...tasks, physicalActivity: true };
+        localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(updatedTasks));
+        
+        // Update health journey status
+        const allCompleted = updatedTasks.medications && updatedTasks.health && updatedTasks.education && updatedTasks.physicalActivity;
+        if (allCompleted) {
+          await dailyTasksService.updateHealthJourney(today, 'complete', user.id);
+          localStorage.setItem(`healthJourney_${today}`, 'complete');
+        }
+      } catch (error) {
+        console.error('Error updating health journey:', error);
       }
     }
   };
@@ -121,7 +148,7 @@ export const useHealthSync = () => {
     }, 30 * 60 * 1000); // 30 minutes
 
     return () => clearInterval(interval);
-  }, [isConnected]);
+  }, [isConnected, user]);
 
   return {
     isConnected,

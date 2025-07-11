@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,9 @@ import { PersonalInfoStep } from '@/components/onboarding/PersonalInfoStep';
 import { GPPAQStep } from '@/components/onboarding/GPPAQStep';
 import { EQ5D5LStep } from '@/components/onboarding/EQ5D5LStep';
 import { OnboardingComplete } from '@/components/onboarding/OnboardingComplete';
+import { useAuth } from '@/hooks/useAuth';
+import { onboardingService } from '@/services/onboardingService';
+import { useToast } from '@/hooks/use-toast';
 
 export interface OnboardingData {
   name: string;
@@ -31,7 +34,10 @@ export interface OnboardingData {
 
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { user, signInAnonymously, loading } = useAuth();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     name: '',
     age: 0,
@@ -52,6 +58,13 @@ const Onboarding = () => {
     },
   });
 
+  // Sign in anonymously when component mounts if not already authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      signInAnonymously().catch(console.error);
+    }
+  }, [loading, user, signInAnonymously]);
+
   const steps = [
     { title: 'Personal Information', component: PersonalInfoStep },
     { title: 'Physical Activity Assessment', component: GPPAQStep },
@@ -71,11 +84,41 @@ const Onboarding = () => {
     }
   };
 
-  const handleComplete = () => {
-    // Store onboarding data (you can save to local storage or send to backend)
-    localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
-    localStorage.setItem('onboardingComplete', 'true');
-    navigate('/');
+  const handleComplete = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please wait while we set up your account",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Save onboarding data to Supabase
+      await onboardingService.saveCompleteOnboarding(onboardingData, user.id);
+      
+      // Store onboarding completion in localStorage
+      localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+      localStorage.setItem('onboardingComplete', 'true');
+      
+      toast({
+        title: "Onboarding complete!",
+        description: "Your health information has been saved successfully",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast({
+        title: "Error saving data",
+        description: "There was an issue saving your information. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateData = (stepData: Partial<OnboardingData>) => {
@@ -83,6 +126,18 @@ const Onboarding = () => {
   };
 
   const progress = ((currentStep + 1) / steps.length) * 100;
+
+  // Show loading while authenticating
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -121,6 +176,7 @@ const Onboarding = () => {
         return (
           <OnboardingComplete
             onComplete={handleComplete}
+            isSubmitting={isSubmitting}
           />
         );
       default:

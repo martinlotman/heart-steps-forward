@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { NotificationService } from "@/services/notificationService";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Medications from "./pages/Medications";
 import Health from "./pages/Health";
@@ -44,36 +45,38 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Redirect to onboarding if not complete */}
-            {!isOnboardingComplete && (
-              <>
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="*" element={<Navigate to="/onboarding" replace />} />
-              </>
-            )}
-            
-            {/* Main app routes - only accessible after onboarding */}
-            {isOnboardingComplete && (
-              <>
-                <Route path="/" element={<Index />} />
-                <Route path="/medications" element={<Medications />} />
-                <Route path="/health" element={<Health />} />
-                <Route path="/education" element={<Education />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/health-journey" element={<HealthJourney />} />
-                <Route path="/physical-activity" element={<PhysicalActivity />} />
-                <Route path="/onboarding" element={<Navigate to="/" replace />} />
-                <Route path="*" element={<NotFound />} />
-              </>
-            )}
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Redirect to onboarding if not complete */}
+              {!isOnboardingComplete && (
+                <>
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="*" element={<Navigate to="/onboarding" replace />} />
+                </>
+              )}
+              
+              {/* Main app routes - only accessible after onboarding */}
+              {isOnboardingComplete && (
+                <>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/medications" element={<Medications />} />
+                  <Route path="/health" element={<Health />} />
+                  <Route path="/education" element={<Education />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/health-journey" element={<HealthJourney />} />
+                  <Route path="/physical-activity" element={<PhysicalActivity />} />
+                  <Route path="/onboarding" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<NotFound />} />
+                </>
+              )}
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

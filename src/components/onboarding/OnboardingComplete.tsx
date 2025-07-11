@@ -1,14 +1,16 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 
 interface OnboardingCompleteProps {
   onComplete: () => void;
+  isSubmitting?: boolean;
 }
 
 export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
   onComplete,
+  isSubmitting = false,
 }) => {
   return (
     <div className="text-center space-y-6">
@@ -19,7 +21,7 @@ export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
       <div>
         <h3 className="text-2xl font-semibold mb-2">Welcome to Your Health Journey!</h3>
         <p className="text-gray-600 mb-6">
-          Thank you for completing the onboarding process. Your health information has been saved 
+          Thank you for completing the onboarding process. Your health information will be saved 
           and will help us provide you with personalized recommendations and track your progress.
         </p>
       </div>
@@ -34,8 +36,15 @@ export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
         </ul>
       </div>
 
-      <Button onClick={onComplete} className="w-full">
-        Get Started
+      <Button onClick={onComplete} className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Saving your information...
+          </>
+        ) : (
+          'Get Started'
+        )}
       </Button>
     </div>
   );

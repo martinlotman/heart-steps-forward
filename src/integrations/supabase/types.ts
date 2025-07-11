@@ -14,6 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_tasks: {
+        Row: {
+          created_at: string
+          education: boolean | null
+          health: boolean | null
+          id: string
+          medications: boolean | null
+          physical_activity: boolean | null
+          task_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          education?: boolean | null
+          health?: boolean | null
+          id?: string
+          medications?: boolean | null
+          physical_activity?: boolean | null
+          task_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          education?: boolean | null
+          health?: boolean | null
+          id?: string
+          medications?: boolean | null
+          physical_activity?: boolean | null
+          task_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      eq5d5l_responses: {
+        Row: {
+          anxiety_depression: string
+          created_at: string
+          health_score: number
+          id: string
+          mobility: string
+          pain_discomfort: string
+          self_care: string
+          updated_at: string
+          user_id: string
+          usual_activities: string
+        }
+        Insert: {
+          anxiety_depression: string
+          created_at?: string
+          health_score: number
+          id?: string
+          mobility: string
+          pain_discomfort: string
+          self_care: string
+          updated_at?: string
+          user_id: string
+          usual_activities: string
+        }
+        Update: {
+          anxiety_depression?: string
+          created_at?: string
+          health_score?: number
+          id?: string
+          mobility?: string
+          pain_discomfort?: string
+          self_care?: string
+          updated_at?: string
+          user_id?: string
+          usual_activities?: string
+        }
+        Relationships: []
+      }
+      gppaq_responses: {
+        Row: {
+          created_at: string
+          housework: string
+          id: string
+          physical_activity: string
+          updated_at: string
+          user_id: string
+          walking_cycling: string
+          work_type: string
+        }
+        Insert: {
+          created_at?: string
+          housework: string
+          id?: string
+          physical_activity: string
+          updated_at?: string
+          user_id: string
+          walking_cycling: string
+          work_type: string
+        }
+        Update: {
+          created_at?: string
+          housework?: string
+          id?: string
+          physical_activity?: string
+          updated_at?: string
+          user_id?: string
+          walking_cycling?: string
+          work_type?: string
+        }
+        Relationships: []
+      }
+      health_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          end_date: string
+          id: string
+          source: string
+          start_date: string
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          end_date: string
+          id?: string
+          source: string
+          start_date: string
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          source?: string
+          start_date?: string
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      health_journey: {
+        Row: {
+          created_at: string
+          id: string
+          journey_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          journey_date: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          journey_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       Lifestyle: {
         Row: {
           "Patient-Friendly Description": string | null
@@ -32,6 +203,36 @@ export type Database = {
           "Performance Indicator"?: string | null
           Task?: string
           "Time Needed"?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number
+          created_at: string
+          date_of_mi: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age: number
+          created_at?: string
+          date_of_mi: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number
+          created_at?: string
+          date_of_mi?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
