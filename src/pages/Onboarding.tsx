@@ -82,14 +82,13 @@ const Onboarding = () => {
     setOnboardingData(prev => ({ ...prev, ...stepData }));
   };
 
-  const CurrentStepComponent = steps[currentStep].component;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 0:
         return (
-          <CurrentStepComponent
+          <PersonalInfoStep
             data={onboardingData}
             updateData={updateData}
             onNext={handleNext}
@@ -97,9 +96,19 @@ const Onboarding = () => {
           />
         );
       case 1:
+        return (
+          <GPPAQStep
+            data={onboardingData}
+            updateData={updateData}
+            onNext={handleNext}
+            onBack={handleBack}
+            canGoNext={currentStep < steps.length - 1}
+            canGoBack={currentStep > 0}
+          />
+        );
       case 2:
         return (
-          <CurrentStepComponent
+          <EQ5D5LStep
             data={onboardingData}
             updateData={updateData}
             onNext={handleNext}
@@ -110,7 +119,7 @@ const Onboarding = () => {
         );
       case 3:
         return (
-          <CurrentStepComponent
+          <OnboardingComplete
             onComplete={handleComplete}
           />
         );
