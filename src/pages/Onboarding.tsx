@@ -85,6 +85,40 @@ const Onboarding = () => {
   const CurrentStepComponent = steps[currentStep].component;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <CurrentStepComponent
+            data={onboardingData}
+            updateData={updateData}
+            onNext={handleNext}
+            canGoNext={currentStep < steps.length - 1}
+          />
+        );
+      case 1:
+      case 2:
+        return (
+          <CurrentStepComponent
+            data={onboardingData}
+            updateData={updateData}
+            onNext={handleNext}
+            onBack={handleBack}
+            canGoNext={currentStep < steps.length - 1}
+            canGoBack={currentStep > 0}
+          />
+        );
+      case 3:
+        return (
+          <CurrentStepComponent
+            onComplete={handleComplete}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
@@ -102,15 +136,7 @@ const Onboarding = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <CurrentStepComponent
-              data={onboardingData}
-              updateData={updateData}
-              onNext={handleNext}
-              onBack={handleBack}
-              onComplete={handleComplete}
-              canGoNext={currentStep < steps.length - 1}
-              canGoBack={currentStep > 0}
-            />
+            {renderCurrentStep()}
           </CardContent>
         </Card>
       </div>
