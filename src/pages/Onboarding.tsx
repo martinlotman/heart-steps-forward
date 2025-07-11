@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { PersonalInfoStep } from '@/components/onboarding/PersonalInfoStep';
 import { GPPAQStep } from '@/components/onboarding/GPPAQStep';
@@ -34,7 +33,7 @@ export interface OnboardingData {
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user, signInAnonymously, loading } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,13 +56,6 @@ const Onboarding = () => {
       healthScore: 50,
     },
   });
-
-  // Sign in anonymously when component mounts if not already authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      signInAnonymously().catch(console.error);
-    }
-  }, [loading, user, signInAnonymously]);
 
   const steps = [
     { title: 'Personal Information', component: PersonalInfoStep },
@@ -88,7 +80,7 @@ const Onboarding = () => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please wait while we set up your account",
+        description: "Please sign in to complete onboarding",
         variant: "destructive"
       });
       return;
@@ -126,18 +118,6 @@ const Onboarding = () => {
   };
 
   const progress = ((currentStep + 1) / steps.length) * 100;
-
-  // Show loading while authenticating
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Setting up your account...</p>
-        </div>
-      </div>
-    );
-  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {

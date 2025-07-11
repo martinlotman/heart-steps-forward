@@ -7,7 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signInAnonymously: () => Promise<void>;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -38,22 +40,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInAnonymously = async () => {
+  const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) throw error;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/onboarding`
+        }
+      });
+      
+      if (error) {
+        console.error('SignUp error:', error);
+        return { error };
+      }
+      
+      console.log('SignUp successful:', data.user?.email);
+      return { error: null };
     } catch (error) {
-      console.error('Error signing in anonymously:', error);
-      throw error;
+      console.error('SignUp exception:', error);
+      return { error };
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('SignIn error:', error);
+        return { error };
+      }
+      
+      console.log('SignIn successful:', data.user?.email);
+      return { error: null };
+    } catch (error) {
+      console.error('SignIn exception:', error);
+      return { error };
     }
   };
 
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('SignOut error:', error);
+        throw error;
+      }
+      
+      // Clear local storage
+      localStorage.removeItem('onboardingData');
+      localStorage.removeItem('onboardingComplete');
+      console.log('SignOut successful');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('SignOut exception:', error);
       throw error;
     }
   };
@@ -62,7 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
-    signInAnonymously,
+    signUp,
+    signIn,
     signOut
   };
 
