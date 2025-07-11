@@ -16,6 +16,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   // Redirect authenticated users
   useEffect(() => {
@@ -52,13 +53,20 @@ const Auth = () => {
               variant: "destructive"
             });
             setIsSignUp(false);
+          } else if (error.message.includes('rate limit') || error.message.includes('46 seconds')) {
+            toast({
+              title: "Please wait",
+              description: "Too many requests. Please wait a moment before trying again.",
+              variant: "destructive"
+            });
           } else {
             throw error;
           }
         } else {
+          setSignupSuccess(true);
           toast({
-            title: "Account created!",
-            description: "Welcome! Let's get started with your health journey.",
+            title: "Account created successfully!",
+            description: "Please check your email and click the confirmation link to complete your registration.",
           });
         }
       } else {
@@ -68,6 +76,12 @@ const Auth = () => {
             toast({
               title: "Invalid credentials",
               description: "Please check your email and password and try again.",
+              variant: "destructive"
+            });
+          } else if (error.message.includes('Email not confirmed')) {
+            toast({
+              title: "Email not confirmed",
+              description: "Please check your email and click the confirmation link first.",
               variant: "destructive"
             });
           } else {
@@ -98,6 +112,40 @@ const Auth = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (signupSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center text-green-600">
+                Check Your Email
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                We've sent a confirmation link to <strong>{email}</strong>
+              </p>
+              <p className="text-sm text-gray-500">
+                Please check your email and click the confirmation link to complete your registration.
+              </p>
+              <Button 
+                onClick={() => {
+                  setSignupSuccess(false);
+                  setIsSignUp(false);
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                Back to Sign In
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
