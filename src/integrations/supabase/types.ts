@@ -236,6 +236,63 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          category: string
+          created_at: string
+          en: string
+          et: string | null
+          id: string
+          key: string
+          ru: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          en: string
+          et?: string | null
+          id?: string
+          key: string
+          ru?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          en?: string
+          et?: string | null
+          id?: string
+          key?: string
+          ru?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslations } from '@/hooks/useTranslations';
 import { useToast } from '@/hooks/use-toast';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const Auth = () => {
   const navigate = useNavigate();
   const { user, signUp, signIn, loading } = useAuth();
+  const { t } = useTranslations();
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState('');
@@ -111,7 +114,7 @@ const Auth = () => {
       <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p>{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -121,6 +124,9 @@ const Auth = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
         <div className="max-w-md w-full">
+          <div className="absolute top-4 right-4">
+            <LanguageSelector />
+          </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl text-center text-green-600">
@@ -142,7 +148,7 @@ const Auth = () => {
                 variant="outline"
                 className="w-full"
               >
-                Back to Sign In
+                {t('auth.sign_in', 'Back to Sign In')}
               </Button>
             </CardContent>
           </Card>
@@ -154,40 +160,43 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 flex items-center justify-center">
       <div className="max-w-md w-full">
+        <div className="absolute top-4 right-4">
+          <LanguageSelector />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
+              {isSignUp ? t('auth.create_account') : t('auth.welcome_back')}
             </CardTitle>
             <p className="text-center text-gray-600">
               {isSignUp 
-                ? 'Start your health journey today' 
-                : 'Sign in to continue your health journey'
+                ? t('auth.start_journey') 
+                : t('auth.continue_journey')
               }
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={t('auth.email')}
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.password')}
                   minLength={6}
                   required
                 />
@@ -199,8 +208,8 @@ const Auth = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting 
-                  ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
-                  : (isSignUp ? 'Create Account' : 'Sign In')
+                  ? (isSignUp ? t('auth.creating_account') : t('auth.signing_in')) 
+                  : (isSignUp ? t('auth.create_account') : t('auth.sign_in'))
                 }
               </Button>
             </form>
@@ -212,8 +221,8 @@ const Auth = () => {
                 className="text-blue-600 hover:underline"
               >
                 {isSignUp 
-                  ? 'Already have an account? Sign in' 
-                  : "Don't have an account? Sign up"
+                  ? t('auth.already_have_account') 
+                  : t('auth.no_account')
                 }
               </button>
             </div>

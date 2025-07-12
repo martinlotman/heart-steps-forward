@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { NotificationService } from "@/services/notificationService";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { TranslationsProvider } from "@/hooks/useTranslations";
 import Index from "./pages/Index";
 import Medications from "./pages/Medications";
 import Health from "./pages/Health";
@@ -95,13 +97,15 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <TranslationsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </TranslationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
