@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { healthDataService, HealthActivity } from '@/services/healthDataService';
 import { healthActivityService } from '@/services/healthActivityService';
 import { dailyTasksService } from '@/services/dailyTasksService';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { dataSecurityService } from '@/services/dataSecurityService';
 
 export const useHealthSync = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -20,8 +20,17 @@ export const useHealthSync = () => {
   }, []);
 
   const connectHealthData = async () => {
+    if (!user) return false;
+    
     setIsLoading(true);
     try {
+      // Log security event
+      await dataSecurityService.logSecurityEvent({
+        action: 'HEALTH_DATA_CONNECTION_ATTEMPT',
+        userId: user.id,
+        resourceAccessed: 'health_data_service'
+      });
+
       const initialized = await healthDataService.initialize();
       if (!initialized) {
         toast({
@@ -35,6 +44,14 @@ export const useHealthSync = () => {
       const hasPermissions = await healthDataService.requestPermissions();
       if (hasPermissions) {
         setIsConnected(true);
+        
+        // Log successful connection
+        await dataSecurityService.logSecurityEvent({
+          action: 'HEALTH_DATA_CONNECTED',
+          userId: user.id,
+          resourceAccessed: 'health_data_service'
+        });
+        
         toast({
           title: "Health data connected",
           description: "Successfully connected to your health data",
@@ -51,6 +68,14 @@ export const useHealthSync = () => {
       }
     } catch (error) {
       console.error('Health connection failed:', error);
+      
+      // Log security event for failed connection
+      await dataSecurityService.logSecurityEvent({
+        action: 'HEALTH_DATA_CONNECTION_FAILED',
+        userId: user.id,
+        resourceAccessed: 'health_data_service'
+      });
+      
       toast({
         title: "Connection failed",
         description: "Failed to connect to health data services",
@@ -66,12 +91,26 @@ export const useHealthSync = () => {
     if (!isConnected || !user) return;
 
     try {
+      // Validate session before syncing
+      const sessionValid = await dataSecurityService.validateSession(user.id);
+      if (!sessionValid) {
+        toast({
+          title: "Session expired",
+          description: "Please sign in again",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const activityData = await healthDataService.syncTodaysActivity();
-      setTodaysActivity(activityData);
+      
+      // Sanitize health data before processing
+      const sanitizedData = dataSecurityService.sanitizeHealthData(activityData);
+      setTodaysActivity(sanitizedData);
       setLastSync(new Date());
       
       // Save activity data to Supabase
-      const healthActivities = activityData.map(activity => ({
+      const healthActivities = sanitizedData.map(activity => ({
         activityType: activity.type as 'steps' | 'calories' | 'distance' | 'exercise',
         value: activity.value,
         unit: activity.unit || (activity.type === 'steps' ? 'steps' : 'kcal'),
@@ -82,12 +121,19 @@ export const useHealthSync = () => {
 
       if (healthActivities.length > 0) {
         await healthActivityService.saveBulkHealthActivities(healthActivities, user.id);
+        
+        // Log data sync
+        await dataSecurityService.logSecurityEvent({
+          action: 'HEALTH_DATA_SYNCED',
+          userId: user.id,
+          resourceAccessed: 'health_activities'
+        });
       }
       
       // Update health journey with activity data
-      await updateHealthJourney(activityData);
+      await updateHealthJourney(sanitizedData);
       
-      return activityData;
+      return sanitizedData;
     } catch (error) {
       console.error('Health sync failed:', error);
       toast({

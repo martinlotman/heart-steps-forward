@@ -7,8 +7,12 @@ import { PersonalInfoStep } from '@/components/onboarding/PersonalInfoStep';
 import { GPPAQStep } from '@/components/onboarding/GPPAQStep';
 import { EQ5D5LStep } from '@/components/onboarding/EQ5D5LStep';
 import { OnboardingComplete } from '@/components/onboarding/OnboardingComplete';
+import { ConsentForm } from '@/components/ConsentForm';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { useAuth } from '@/hooks/useAuth';
 import { onboardingService } from '@/services/onboardingService';
+import { complianceService } from '@/services/complianceService';
+import { dataSecurityService } from '@/services/dataSecurityService';
 import { useToast } from '@/hooks/use-toast';
 
 export interface OnboardingData {
@@ -37,6 +41,7 @@ const Onboarding = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     name: '',
     age: 0,
@@ -58,11 +63,47 @@ const Onboarding = () => {
   });
 
   const steps = [
+    { title: 'Consent & Disclaimer', component: 'consent' },
     { title: 'Personal Information', component: PersonalInfoStep },
     { title: 'Physical Activity Assessment', component: GPPAQStep },
     { title: 'Health Assessment', component: EQ5D5LStep },
     { title: 'Complete', component: OnboardingComplete },
   ];
+
+  const handleConsent = async (consented: boolean) => {
+    if (!user) return;
+
+    if (consented) {
+      try {
+        await complianceService.recordConsent(user.id, {
+          data_collection: true,
+          medical_disclaimer: true,
+          privacy_policy: true,
+          research_participation: true
+        });
+
+        await dataSecurityService.logSecurityEvent({
+          action: 'ONBOARDING_CONSENT_GIVEN',
+          userId: user.id
+        });
+
+        setConsentGiven(true);
+        setCurrentStep(1);
+      } catch (error) {
+        toast({
+          title: "Error recording consent",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Consent required",
+        description: "You must consent to data processing to use CardiacCare",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -71,7 +112,7 @@ const Onboarding = () => {
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
+    if (currentStep > 1) { // Can't go back to consent step
       setCurrentStep(currentStep - 1);
     }
   };
@@ -88,11 +129,20 @@ const Onboarding = () => {
 
     setIsSubmitting(true);
     try {
+      // Sanitize data before saving
+      const sanitizedData = dataSecurityService.sanitizeHealthData(onboardingData);
+      
       // Save onboarding data to Supabase
-      await onboardingService.saveCompleteOnboarding(onboardingData, user.id);
+      await onboardingService.saveCompleteOnboarding(sanitizedData, user.id);
+      
+      // Log completion
+      await dataSecurityService.logSecurityEvent({
+        action: 'ONBOARDING_COMPLETED',
+        userId: user.id
+      });
       
       // Store onboarding completion in localStorage
-      localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
+      localStorage.setItem('onboardingData', JSON.stringify(sanitizedData));
       localStorage.setItem('onboardingComplete', 'true');
       
       toast({
@@ -123,6 +173,13 @@ const Onboarding = () => {
     switch (currentStep) {
       case 0:
         return (
+          <div className="space-y-6">
+            <MedicalDisclaimer variant="card" />
+            <ConsentForm onConsent={handleConsent} isLoading={isSubmitting} />
+          </div>
+        );
+      case 1:
+        return (
           <PersonalInfoStep
             data={onboardingData}
             updateData={updateData}
@@ -130,7 +187,7 @@ const Onboarding = () => {
             canGoNext={currentStep < steps.length - 1}
           />
         );
-      case 1:
+      case 2:
         return (
           <GPPAQStep
             data={onboardingData}
@@ -138,10 +195,10 @@ const Onboarding = () => {
             onNext={handleNext}
             onBack={handleBack}
             canGoNext={currentStep < steps.length - 1}
-            canGoBack={currentStep > 0}
+            canGoBack={currentStep > 1}
           />
         );
-      case 2:
+      case 3:
         return (
           <EQ5D5LStep
             data={onboardingData}
@@ -149,10 +206,10 @@ const Onboarding = () => {
             onNext={handleNext}
             onBack={handleBack}
             canGoNext={currentStep < steps.length - 1}
-            canGoBack={currentStep > 0}
+            canGoBack={currentStep > 1}
           />
         );
-      case 3:
+      case 4:
         return (
           <OnboardingComplete
             onComplete={handleComplete}
@@ -170,7 +227,7 @@ const Onboarding = () => {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              Welcome to Your Health Journey
+              Welcome to CardiacCare
             </CardTitle>
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-600">

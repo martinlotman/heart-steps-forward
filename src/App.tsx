@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,7 @@ import PhysicalActivity from "./pages/PhysicalActivity";
 import Onboarding from "./pages/Onboarding";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
 
 const queryClient = new QueryClient();
 
@@ -73,18 +73,21 @@ const AppRoutes = () => {
 
   // Authenticated and onboarding complete - show main app
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/medications" element={<Medications />} />  
-      <Route path="/health" element={<Health />} />
-      <Route path="/education" element={<Education />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/health-journey" element={<HealthJourney />} />
-      <Route path="/physical-activity" element={<PhysicalActivity />} />
-      <Route path="/auth" element={<Navigate to="/" replace />} />
-      <Route path="/onboarding" element={<Navigate to="/" replace />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <div>
+      <MedicalDisclaimer variant="banner" />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/medications" element={<Medications />} />  
+        <Route path="/health" element={<Health />} />
+        <Route path="/education" element={<Education />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/health-journey" element={<HealthJourney />} />
+        <Route path="/physical-activity" element={<PhysicalActivity />} />
+        <Route path="/auth" element={<Navigate to="/" replace />} />
+        <Route path="/onboarding" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
   );
 };
 
