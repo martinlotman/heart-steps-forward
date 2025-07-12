@@ -32,9 +32,11 @@ const AppRoutes = () => {
   }, []);
 
   useEffect(() => {
+    console.log('User changed:', user?.email, 'Loading:', loading);
     // Check if onboarding is complete when user changes
     if (user) {
       const onboardingComplete = localStorage.getItem('onboardingComplete');
+      console.log('Onboarding complete status:', onboardingComplete);
       setIsOnboardingComplete(onboardingComplete === 'true');
     } else {
       setIsOnboardingComplete(null);
@@ -42,7 +44,8 @@ const AppRoutes = () => {
   }, [user]);
 
   // Show loading state while checking auth status
-  if (loading || (user && isOnboardingComplete === null)) {
+  if (loading) {
+    console.log('App is loading...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -55,6 +58,7 @@ const AppRoutes = () => {
 
   // Not authenticated - show auth page
   if (!user) {
+    console.log('User not authenticated, showing auth page');
     return (
       <Routes>
         <Route path="/auth" element={<Auth />} />
@@ -64,7 +68,8 @@ const AppRoutes = () => {
   }
 
   // Authenticated but onboarding not complete
-  if (!isOnboardingComplete) {
+  if (isOnboardingComplete === false) {
+    console.log('User authenticated but onboarding not complete');
     return (
       <Routes>
         <Route path="/onboarding" element={<Onboarding />} />
@@ -73,7 +78,21 @@ const AppRoutes = () => {
     );
   }
 
+  // Still checking onboarding status
+  if (isOnboardingComplete === null) {
+    console.log('Still checking onboarding status...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Authenticated and onboarding complete - show main app
+  console.log('User authenticated and onboarding complete, showing main app');
   return (
     <div>
       <MedicalDisclaimer variant="banner" />
