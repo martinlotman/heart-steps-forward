@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { profileService } from '@/services/profileService';
 
 interface DayProgress {
   day: number;
@@ -19,15 +21,56 @@ interface DayProgress {
 }
 
 const HealthJourney = () => {
+  const { user } = useAuth();
   const [selectedDay, setSelectedDay] = useState<DayProgress | null>(null);
-  
-  const [journeyData] = useState<DayProgress[]>(() => {
+  const [journeyData, setJourneyData] = useState<DayProgress[]>([]);
+  const [miDate, setMiDate] = useState<Date | null>(null);
+  const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchProfileAndGenerateJourney = async () => {
+      if (user) {
+        try {
+          const profile = await profileService.getUserProfile(user.id);
+          let actualMiDate: Date;
+          
+          if (profile && profile.date_of_mi) {
+            actualMiDate = new Date(profile.date_of_mi);
+            const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
+            setDaysSinceMI(days);
+          } else {
+            // Fallback to localStorage
+            const onboardingData = localStorage.getItem('onboardingData');
+            if (onboardingData) {
+              const data = JSON.parse(onboardingData);
+              if (data.dateOfMI) {
+                actualMiDate = new Date(data.dateOfMI);
+                const days = profileService.calculateDaysSinceMI(data.dateOfMI);
+                setDaysSinceMI(days);
+              }
+            }
+          }
+
+          if (actualMiDate) {
+            setMiDate(actualMiDate);
+            generateJourneyData(actualMiDate, daysSinceMI);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+
+    fetchProfileAndGenerateJourney();
+  }, [user, daysSinceMI]);
+
+  const generateJourneyData = (miDate: Date, totalDays: number) => {
     const data: DayProgress[] = [];
     const today = new Date();
     
-    for (let i = 44; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const date = new Date(miDate);
+      date.setDate(miDate.getDate() + (totalDays - i));
       const dateString = date.toDateString();
       
       // Check if this day had all daily tasks completed
@@ -56,7 +99,7 @@ const HealthJourney = () => {
       }
       
       data.push({
-        day: 45 - i,
+        day: totalDays - i,
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         medicationsTaken,
         totalMedications,
@@ -68,13 +111,13 @@ const HealthJourney = () => {
       });
     }
     
-    return data;
-  });
+    setJourneyData(data);
+  };
 
   const completeDays = journeyData.filter(day => day.status === 'complete').length;
   const partialDays = journeyData.filter(day => day.status === 'partial').length;
   const incompleteDays = journeyData.filter(day => day.status === 'incomplete').length;
-  const overallProgress = (completeDays / journeyData.length) * 100;
+  const overallProgress = journeyData.length > 0 ? (completeDays / journeyData.length) * 100 : 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -119,6 +162,9 @@ const HealthJourney = () => {
               <span className="text-lg font-bold">{Math.round(overallProgress)}%</span>
             </div>
             <Progress value={overallProgress} className="h-3 bg-white/20" />
+            <div className="mt-2 text-sm text-white/80">
+              {daysSinceMI} days since your heart event
+            </div>
           </div>
         </div>
       </div>
@@ -151,7 +197,7 @@ const HealthJourney = () => {
         {/* Journey Timeline */}
         <Card className="mb-4">
           <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-4 text-center">45-Day Recovery Journey</h2>
+            <h2 className="text-lg font-semibold mb-4 text-center">{daysSinceMI}-Day Recovery Journey</h2>
             
             {/* Days Grid */}
             <div className="grid grid-cols-7 gap-2">

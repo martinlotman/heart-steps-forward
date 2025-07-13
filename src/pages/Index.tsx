@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Heart, Calendar, Activity, BookOpen, Bell } from 'lucide-react';
 import EmergencyButton from '@/components/EmergencyButton';
@@ -7,6 +6,8 @@ import NextMedicationCard from '@/components/NextMedicationCard';
 import QuickStatsGrid from '@/components/QuickStatsGrid';
 import DailyTasksList from '@/components/DailyTasksList';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { profileService } from '@/services/profileService';
 
 interface Medication {
   id: number;
@@ -18,6 +19,9 @@ interface Medication {
 
 const Index = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+  const [userProfile, setUserProfile] = useState<any>(null);
   
   // Sample medications data - in a real app this would come from a database
   const [medications, setMedications] = useState<Medication[]>([
@@ -25,6 +29,35 @@ const Index = () => {
     { id: 2, name: 'Lisinopril', dosage: '10mg', time: '2:00 PM', taken: false },
     { id: 3, name: 'Atorvastatin', dosage: '20mg', time: '8:00 PM', taken: false },
   ]);
+
+  // Fetch user profile and calculate days since MI
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const profile = await profileService.getUserProfile(user.id);
+          if (profile && profile.date_of_mi) {
+            setUserProfile(profile);
+            const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
+            setDaysSinceMI(days);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // Fallback to localStorage if database fetch fails
+          const onboardingData = localStorage.getItem('onboardingData');
+          if (onboardingData) {
+            const data = JSON.parse(onboardingData);
+            if (data.dateOfMI) {
+              const days = profileService.calculateDaysSinceMI(data.dateOfMI);
+              setDaysSinceMI(days);
+            }
+          }
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   // Get next medication that hasn't been taken
   const getNextMedication = () => {
@@ -135,7 +168,7 @@ const Index = () => {
   const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education && dailyTasks.physicalActivity;
 
   const quickStats = [
-    { label: 'Days since MI', value: '45', icon: Heart, link: '/health-journey' },
+    { label: 'Days since MI', value: daysSinceMI.toString(), icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: '2/4', icon: Calendar },
     { label: 'Physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
   ];
@@ -171,7 +204,7 @@ const Index = () => {
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Good morning, John</h1>
+              <h1 className="text-2xl font-bold">Good morning, {userProfile?.name || 'John'}</h1>
               <p className="text-blue-100">Your heart health journey continues</p>
             </div>
             <Bell className="text-blue-100" size={24} />
