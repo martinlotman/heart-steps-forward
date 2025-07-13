@@ -44,7 +44,7 @@ const DailyTasksList = ({ tasks, allTasksCompleted }: DailyTasksListProps) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <task.icon className={`mr-4 ${
-                      task.completed ? 'text-green-600' : task.to === '/medications' ? 'text-blue-600' : task.to === '/health' ? 'text-red-500' : 'text-green-600'
+                      task.completed ? 'text-green-600' : task.to === '/medications' ? 'text-blue-600' : task.to === '/health' ? 'text-red-500' : 'text-purple-600'
                     }`} size={24} />
                     <div>
                       <h3 className={`font-medium ${

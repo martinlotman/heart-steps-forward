@@ -224,8 +224,8 @@ const Index = () => {
     {
       to: "/education",
       icon: BookOpen,
-      title: "Complete Learning",
-      description: "Complete lifestyle recommendations",
+      title: "Learn & Complete",
+      description: "Complete today's learning task",
       completed: dailyTasks.education,
     }
   ];

@@ -4,42 +4,25 @@ import { ArrowLeft, Play, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import Navigation from '@/components/Navigation';
-import LifestyleTaskCard from '@/components/LifestyleTaskCard';
-import { useLifestyleRecommendations } from '@/hooks/useLifestyleRecommendations';
+import DailyRecommendationCard from '@/components/DailyRecommendationCard';
+import { useDailyRecommendations } from '@/hooks/useDailyRecommendations';
 
 const Education = () => {
-  const { recommendations, loading, error } = useLifestyleRecommendations();
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const { recommendation, loading, error } = useDailyRecommendations();
+  const [isCompleted, setIsCompleted] = useState(false);
 
-  // Load completed tasks from localStorage
+  // Load completion status from localStorage
   useEffect(() => {
     const today = new Date().toDateString();
-    const savedCompletedTasks = localStorage.getItem(`completedLifestyleTasks_${today}`);
-    if (savedCompletedTasks) {
-      setCompletedTasks(new Set(JSON.parse(savedCompletedTasks)));
-    }
-  }, []);
-
-  const handleTaskComplete = (taskName: string, performanceIndicator: string) => {
-    const today = new Date().toDateString();
-    const newCompletedTasks = new Set([...completedTasks, taskName]);
-    setCompletedTasks(newCompletedTasks);
-    
-    // Save to localStorage
-    localStorage.setItem(`completedLifestyleTasks_${today}`, JSON.stringify([...newCompletedTasks]));
-    
-    // Update education task completion in daily tasks
     const savedTasks = localStorage.getItem(`dailyTasks_${today}`);
     if (savedTasks) {
       const tasks = JSON.parse(savedTasks);
-      tasks.education = true;
-      localStorage.setItem(`dailyTasks_${today}`, JSON.stringify(tasks));
-      
-      // Check if all daily tasks are completed
-      if (tasks.medications && tasks.health && tasks.education) {
-        localStorage.setItem(`healthJourney_${today}`, 'complete');
-      }
+      setIsCompleted(tasks.education || false);
     }
+  }, []);
+
+  const handleTaskComplete = () => {
+    setIsCompleted(true);
   };
 
   if (loading) {
@@ -51,12 +34,12 @@ const Education = () => {
               <Link to="/" className="mr-4">
                 <ArrowLeft className="text-gray-600" size={24} />
               </Link>
-              <h1 className="text-xl font-semibold text-gray-800">Education</h1>
+              <h1 className="text-xl font-semibold text-gray-800">Learn & Complete</h1>
             </div>
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <p>Loading recommendations...</p>
+          <p>Loading today's learning task...</p>
         </div>
         <Navigation />
       </div>
@@ -72,20 +55,17 @@ const Education = () => {
               <Link to="/" className="mr-4">
                 <ArrowLeft className="text-gray-600" size={24} />
               </Link>
-              <h1 className="text-xl font-semibold text-gray-800">Education</h1>
+              <h1 className="text-xl font-semibold text-gray-800">Learn & Complete</h1>
             </div>
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <p className="text-red-600">Error loading recommendations: {error}</p>
+          <p className="text-red-600">Error loading today's learning task: {error}</p>
         </div>
         <Navigation />
       </div>
     );
   }
-
-  const completedCount = completedTasks.size;
-  const totalCount = recommendations.length;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -95,7 +75,7 @@ const Education = () => {
             <Link to="/" className="mr-4">
               <ArrowLeft className="text-gray-600" size={24} />
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800">Education</h1>
+            <h1 className="text-xl font-semibold text-gray-800">Learn & Complete</h1>
           </div>
         </div>
       </div>
@@ -107,63 +87,58 @@ const Education = () => {
             <div className="flex items-center">
               <Play className="text-blue-600 mr-2" size={20} />
               <div>
-                <p className="text-blue-800 font-medium">Daily Tip</p>
-                <p className="text-blue-600 text-sm">Complete learning tasks to improve your recovery journey</p>
+                <p className="text-blue-800 font-medium">Today's Learning</p>
+                <p className="text-blue-600 text-sm">Complete today's learning task to improve your recovery journey</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Progress Summary */}
-        {totalCount > 0 && (
-          <div className="mb-6">
-            <Card className="bg-gradient-to-r from-blue-50 to-green-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Today's Progress</p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {completedCount} of {totalCount} tasks completed
-                    </p>
-                  </div>
-                  <div className="text-2xl">
-                    {completedCount === totalCount ? '🎉' : '📚'}
-                  </div>
+        <div className="mb-6">
+          <Card className={`${isCompleted ? 'bg-gradient-to-r from-green-50 to-blue-50' : 'bg-gradient-to-r from-blue-50 to-green-50'}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Today's Progress</p>
+                  <p className="text-lg font-semibold text-gray-800">
+                    {isCompleted ? '1 of 1 task completed' : '0 of 1 task completed'}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                <div className="text-2xl">
+                  {isCompleted ? '🎉' : '📚'}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* All tasks completed message */}
-        {completedCount === totalCount && totalCount > 0 && (
+        {/* Task completed message */}
+        {isCompleted && (
           <div className="mb-4">
             <Card className="bg-green-50 border-green-200">
               <CardContent className="p-4">
                 <div className="flex items-center text-green-700">
                   <Check className="mr-2" size={20} />
-                  <span className="font-medium">All learning tasks completed! Great job! 🎉</span>
+                  <span className="font-medium">Today's learning task completed! Great job! 🎉</span>
                 </div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Lifestyle Recommendations */}
-        <div className="space-y-4">
-          {recommendations.map((recommendation, index) => (
-            <LifestyleTaskCard
-              key={index}
-              recommendation={recommendation}
-              isCompleted={completedTasks.has(recommendation.Task)}
-              onComplete={handleTaskComplete}
-            />
-          ))}
-        </div>
+        {/* Daily Recommendation */}
+        {recommendation && (
+          <DailyRecommendationCard
+            recommendation={recommendation}
+            isCompleted={isCompleted}
+            onComplete={handleTaskComplete}
+          />
+        )}
 
-        {recommendations.length === 0 && (
+        {!recommendation && !loading && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No lifestyle recommendations available at the moment.</p>
+            <p className="text-gray-500">No learning task available for today.</p>
           </div>
         )}
       </div>

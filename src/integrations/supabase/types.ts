@@ -206,6 +206,27 @@ export type Database = {
         }
         Relationships: []
       }
+      "Lifestyle daily recommendations": {
+        Row: {
+          Recommendation: string | null
+          Reference: string | null
+          Tip: string
+          Topic: string | null
+        }
+        Insert: {
+          Recommendation?: string | null
+          Reference?: string | null
+          Tip: string
+          Topic?: string | null
+        }
+        Update: {
+          Recommendation?: string | null
+          Reference?: string | null
+          Tip?: string
+          Topic?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number
