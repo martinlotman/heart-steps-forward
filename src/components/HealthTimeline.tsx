@@ -1,9 +1,13 @@
 
 import { ArrowLeft, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { healthMetricsService, HealthMetric } from '@/services/healthMetricsService';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface HealthTimelineProps {
   metric: {
@@ -14,85 +18,41 @@ interface HealthTimelineProps {
   onBack: () => void;
 }
 
-interface BaseDataEntry {
-  date: string;
-  value: number;
-  trend: string;
-}
-
-interface BloodPressureEntry extends BaseDataEntry {
-  systolic?: number;
-  diastolic?: number;
-}
-
 const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
-  // Sample historical data - in a real app, this would come from a database
-  const getHistoricalData = (): (BaseDataEntry | BloodPressureEntry)[] => {
-    const baseData = {
-      'Blood Pressure': [
-        { date: '2024-01-15', value: 125, systolic: 125, diastolic: 82, trend: 'up' },
-        { date: '2024-01-14', value: 120, systolic: 120, diastolic: 80, trend: 'stable' },
-        { date: '2024-01-13', value: 118, systolic: 118, diastolic: 78, trend: 'down' },
-        { date: '2024-01-12', value: 122, systolic: 122, diastolic: 81, trend: 'up' },
-        { date: '2024-01-11', value: 119, systolic: 119, diastolic: 79, trend: 'stable' },
-      ],
-      'Weight': [
-        { date: '2024-01-15', value: 165, trend: 'down' },
-        { date: '2024-01-14', value: 166, trend: 'down' },
-        { date: '2024-01-13', value: 167, trend: 'stable' },
-        { date: '2024-01-12', value: 167, trend: 'up' },
-        { date: '2024-01-11', value: 168, trend: 'down' },
-      ],
-      'Heart Rate': [
-        { date: '2024-01-15', value: 72, trend: 'stable' },
-        { date: '2024-01-14', value: 71, trend: 'down' },
-        { date: '2024-01-13', value: 74, trend: 'up' },
-        { date: '2024-01-12', value: 73, trend: 'stable' },
-        { date: '2024-01-11', value: 75, trend: 'down' },
-      ],
-      'Steps Today': [
-        { date: '2024-01-15', value: 8420, trend: 'up' },
-        { date: '2024-01-14', value: 7850, trend: 'down' },
-        { date: '2024-01-13', value: 9200, trend: 'up' },
-        { date: '2024-01-12', value: 6500, trend: 'down' },
-        { date: '2024-01-11', value: 8100, trend: 'up' },
-      ],
-      'LDL-C': [
-        { date: '2024-01-10', value: 85, trend: 'down' },
-        { date: '2023-12-15', value: 92, trend: 'up' },
-        { date: '2023-11-20', value: 88, trend: 'down' },
-        { date: '2023-10-25', value: 95, trend: 'stable' },
-      ],
-      'Total Cholesterol': [
-        { date: '2024-01-10', value: 180, trend: 'stable' },
-        { date: '2023-12-15', value: 185, trend: 'down' },
-        { date: '2023-11-20', value: 190, trend: 'up' },
-        { date: '2023-10-25', value: 188, trend: 'stable' },
-      ],
-      'HDL-C': [
-        { date: '2024-01-10', value: 55, trend: 'up' },
-        { date: '2023-12-15', value: 52, trend: 'stable' },
-        { date: '2023-11-20', value: 50, trend: 'down' },
-        { date: '2023-10-25', value: 53, trend: 'up' },
-      ],
-    };
+  const { user } = useAuth();
+  const [data, setData] = useState<HealthMetric[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadMetricData();
+    }
+  }, [user, metric.title]);
+
+  const loadMetricData = async () => {
+    if (!user) return;
     
-    return baseData[metric.title as keyof typeof baseData] || [];
+    setLoading(true);
+    try {
+      const metrics = await healthMetricsService.getHealthMetrics(user.id, metric.title);
+      setData(metrics);
+    } catch (error) {
+      console.error('Error loading metric data:', error);
+      toast.error('Failed to load metric data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const data = getHistoricalData();
-  
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case 'up':
-        return <TrendingUp className="text-green-600" size={16} />;
-      case 'down':
-        return <TrendingDown className="text-green-600" size={16} />;
-      case 'stable':
-        return <Minus className="text-gray-500" size={16} />;
-      default:
-        return null;
+  const getTrendIcon = (current: number, previous?: number) => {
+    if (!previous) return <Minus className="text-muted-foreground" size={16} />;
+    
+    if (current > previous) {
+      return <TrendingUp className="text-accent-foreground" size={16} />;
+    } else if (current < previous) {
+      return <TrendingDown className="text-accent-foreground" size={16} />;
     }
+    return <Minus className="text-muted-foreground" size={16} />;
   };
 
   const formatDate = (dateString: string) => {
@@ -107,13 +67,20 @@ const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
   const chartConfig = {
     value: {
       label: metric.title,
-      color: "#3b82f6",
+      color: "hsl(var(--primary))",
     },
   };
 
+  // Prepare chart data - reverse for chronological order in chart
+  const chartData = [...data].reverse().map(entry => ({
+    date: entry.recorded_at,
+    value: entry.value,
+    displayDate: formatDate(entry.recorded_at)
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white shadow-sm">
+    <div className="min-h-screen bg-background pb-20">
+      <div className="bg-card shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center">
             <Button
@@ -124,73 +91,86 @@ const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
             >
               <ArrowLeft size={20} />
             </Button>
-            <h1 className="text-xl font-semibold text-gray-800">{metric.title} Timeline</h1>
+            <h1 className="text-xl font-semibold text-foreground">{metric.title} Timeline</h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
-        {/* Chart Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Trend Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    fontSize={12}
-                  />
-                  <YAxis fontSize={12} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="var(--color-value)" 
-                    strokeWidth={2}
-                    dot={{ fill: "var(--color-value)", strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Timeline List */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-800">History</h2>
-          {data.map((entry, index) => (
-            <Card key={index} className="border-l-4 border-l-blue-500">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">{formatDate(entry.date)}</p>
-                    <div className="flex items-center mt-1">
-                      <span className="text-2xl font-bold text-gray-800">
-                        {entry.value}
-                      </span>
-                      <span className="text-sm text-gray-500 ml-1">{metric.unit}</span>
-                      {metric.title === 'Blood Pressure' && 'systolic' in entry && 'diastolic' in entry && (
-                        <span className="text-sm text-gray-500 ml-1">
-                          ({entry.systolic}/{entry.diastolic})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    {getTrendIcon(entry.trend)}
-                  </div>
-                </div>
+        {loading ? (
+          <div className="text-center text-muted-foreground py-8">
+            Loading timeline data...
+          </div>
+        ) : data.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            <p>No {metric.title.toLowerCase()} data recorded yet.</p>
+            <p className="text-sm mt-2">Start logging your metrics to see trends here.</p>
+          </div>
+        ) : (
+          <>
+            {/* Chart Section */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Trend Chart</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <XAxis 
+                        dataKey="displayDate"
+                        fontSize={12}
+                      />
+                      <YAxis fontSize={12} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="var(--color-value)" 
+                        strokeWidth={2}
+                        dot={{ fill: "var(--color-value)", strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
-          ))}
-        </div>
+
+            {/* Timeline List */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">History</h2>
+              {data.map((entry, index) => (
+                <Card key={entry.id} className="border-l-4 border-l-primary">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{formatDate(entry.recorded_at)}</p>
+                        <div className="flex items-center mt-1">
+                          <span className="text-2xl font-bold text-foreground">
+                            {metric.title === 'Blood Pressure' && entry.systolic && entry.diastolic
+                              ? `${entry.systolic}/${entry.diastolic}`
+                              : entry.value
+                            }
+                          </span>
+                          <span className="text-sm text-muted-foreground ml-1">{metric.unit}</span>
+                        </div>
+                        {entry.notes && (
+                          <p className="text-sm text-muted-foreground mt-1">{entry.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center">
+                        {getTrendIcon(entry.value, data[index + 1]?.value)}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="mt-6">
-          <Button className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button className="w-full bg-primary hover:bg-primary/90" onClick={onBack}>
             Add New Entry
           </Button>
         </div>

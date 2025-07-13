@@ -185,6 +185,48 @@ export type Database = {
         }
         Relationships: []
       }
+      health_metrics: {
+        Row: {
+          created_at: string
+          diastolic: number | null
+          id: string
+          metric_type: string
+          notes: string | null
+          recorded_at: string
+          systolic: number | null
+          unit: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          diastolic?: number | null
+          id?: string
+          metric_type: string
+          notes?: string | null
+          recorded_at?: string
+          systolic?: number | null
+          unit: string
+          updated_at?: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          diastolic?: number | null
+          id?: string
+          metric_type?: string
+          notes?: string | null
+          recorded_at?: string
+          systolic?: number | null
+          unit?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       Lifestyle: {
         Row: {
           "Patient-Friendly Description": string | null
