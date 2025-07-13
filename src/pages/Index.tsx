@@ -30,6 +30,15 @@ const Index = () => {
     { id: 3, name: 'Atorvastatin', dosage: '20mg', time: '8:00 PM', taken: false },
   ]);
 
+  // Get time-based greeting
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+  };
+
   // Fetch user profile and calculate days since MI
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -197,6 +206,9 @@ const Index = () => {
     }
   ];
 
+  const greeting = getTimeBasedGreeting();
+  const displayName = userProfile?.name || 'there';
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
@@ -204,7 +216,7 @@ const Index = () => {
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Good morning, {userProfile?.name || 'John'}</h1>
+              <h1 className="text-2xl font-bold">{greeting}, {displayName}</h1>
               <p className="text-blue-100">Your heart health journey continues</p>
             </div>
             <Bell className="text-blue-100" size={24} />
