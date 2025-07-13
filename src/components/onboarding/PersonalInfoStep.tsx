@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { OnboardingData } from '@/pages/Onboarding';
+import { useAuth } from '@/hooks/useAuth';
+import { profileService } from '@/services/profileService';
 
 interface PersonalInfoStepProps {
   data: OnboardingData;
@@ -23,6 +25,33 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   onNext,
   canGoNext,
 }) => {
+  const { user } = useAuth();
+
+  // Load existing profile data if available
+  useEffect(() => {
+    const loadExistingProfile = async () => {
+      if (user) {
+        try {
+          const profile = await profileService.getUserProfile(user.id);
+          if (profile) {
+            updateData({
+              name: profile.name || data.name,
+              age: profile.age || data.age,
+              dateOfMI: profile.date_of_mi ? new Date(profile.date_of_mi) : data.dateOfMI,
+            });
+          }
+        } catch (error) {
+          console.error('Error loading existing profile:', error);
+        }
+      }
+    };
+
+    // Only load if the form is empty
+    if (!data.name && !data.age && !data.dateOfMI) {
+      loadExistingProfile();
+    }
+  }, [user, data.name, data.age, data.dateOfMI, updateData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (data.name && data.age > 0 && data.dateOfMI) {

@@ -4,8 +4,59 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Navigation from '@/components/Navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { profileService } from '@/services/profileService';
+import { useState, useEffect } from 'react';
 
 const Profile = () => {
+  const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const profile = await profileService.getUserProfile(user.id);
+          if (profile) {
+            setUserProfile(profile);
+            if (profile.date_of_mi) {
+              const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
+              setDaysSinceMI(days);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // Fallback to localStorage if database fetch fails
+          const onboardingData = localStorage.getItem('onboardingData');
+          if (onboardingData) {
+            const data = JSON.parse(onboardingData);
+            setUserProfile({ name: data.name });
+            if (data.dateOfMI) {
+              const days = profileService.calculateDaysSinceMI(data.dateOfMI);
+              setDaysSinceMI(days);
+            }
+          }
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
+  const getInitials = (name: string) => {
+    if (!name) return 'JD';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  };
+
+  const userName = userProfile?.name || 'John Doe';
+  const userInitials = getInitials(userName);
+
   const menuItems = [
     { icon: Bell, title: 'Notifications', description: 'Manage your medication reminders' },
     { icon: User, title: 'Personal Info', description: 'Update your health information' },
@@ -32,12 +83,12 @@ const Profile = () => {
           <div className="flex items-center">
             <Avatar className="h-16 w-16 mr-4">
               <AvatarFallback className="bg-blue-100 text-blue-600 text-xl font-semibold">
-                JD
+                {userInitials}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">John Doe</h2>
-              <p className="text-gray-600">Recovery Day 45</p>
+              <h2 className="text-xl font-semibold text-gray-800">{userName}</h2>
+              <p className="text-gray-600">Recovery Day {daysSinceMI}</p>
               <p className="text-sm text-green-600 font-medium">Excellent Progress!</p>
             </div>
           </div>
