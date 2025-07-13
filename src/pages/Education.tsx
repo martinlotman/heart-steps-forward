@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Play, Check } from 'lucide-react';
+import { ArrowLeft, Play, Check, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import Navigation from '@/components/Navigation';
@@ -39,7 +39,12 @@ const Education = () => {
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <p>Loading today's learning task...</p>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading today's learning task...</p>
+            </div>
+          </div>
         </div>
         <Navigation />
       </div>
@@ -60,7 +65,13 @@ const Education = () => {
           </div>
         </div>
         <div className="max-w-md mx-auto px-4 py-6">
-          <p className="text-red-600">Error loading today's learning task: {error}</p>
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="p-6 text-center">
+              <div className="text-red-600 mb-2">⚠️</div>
+              <p className="text-red-800 font-medium mb-2">Unable to load learning tasks</p>
+              <p className="text-red-600 text-sm">{error}</p>
+            </CardContent>
+          </Card>
         </div>
         <Navigation />
       </div>
@@ -128,18 +139,22 @@ const Education = () => {
         )}
 
         {/* Daily Recommendation */}
-        {recommendation && (
+        {recommendation ? (
           <DailyRecommendationCard
             recommendation={recommendation}
             isCompleted={isCompleted}
             onComplete={handleTaskComplete}
           />
-        )}
-
-        {!recommendation && !loading && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No learning task available for today.</p>
-          </div>
+        ) : (
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="p-6 text-center">
+              <BookOpen className="mx-auto mb-4 text-orange-600" size={48} />
+              <h3 className="text-lg font-semibold text-orange-800 mb-2">No Learning Tasks Available</h3>
+              <p className="text-orange-700 text-sm">
+                Learning recommendations are currently being prepared. Please check back later.
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
 

@@ -13,20 +13,36 @@ export const useDailyRecommendations = () => {
   useEffect(() => {
     const fetchDailyRecommendation = async () => {
       try {
-        // Get a random recommendation for today - in production you might want 
-        // to use a more sophisticated algorithm based on date
-        const { data, error } = await supabase
+        console.log('Fetching daily recommendations from Supabase...');
+        
+        // First, let's check if there are any recommendations at all
+        const { data: allData, error: countError } = await supabase
           .from('Lifestyle daily recommendations')
-          .select('*')
-          .limit(1)
-          .single();
+          .select('*');
 
-        if (error) {
-          throw error;
+        if (countError) {
+          console.error('Error fetching recommendations:', countError);
+          throw countError;
         }
 
-        setRecommendation(data);
+        console.log('Available recommendations:', allData?.length || 0);
+
+        if (!allData || allData.length === 0) {
+          console.log('No recommendations found in the database');
+          setRecommendation(null);
+          setLoading(false);
+          return;
+        }
+
+        // Get a random recommendation for today - you might want to use
+        // a more sophisticated algorithm based on date in the future
+        const randomIndex = Math.floor(Math.random() * allData.length);
+        const selectedRecommendation = allData[randomIndex];
+        
+        console.log('Selected recommendation:', selectedRecommendation);
+        setRecommendation(selectedRecommendation);
       } catch (err) {
+        console.error('Error in fetchDailyRecommendation:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch daily recommendation');
       } finally {
         setLoading(false);
