@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -27,15 +26,15 @@ const Health = () => {
 
   const metricDefinitions = [
     { title: 'Blood Pressure', unit: 'mmHg', type: 'daily' as const },
-    { title: 'Weight', unit: 'lbs', type: 'daily' as const },
+    { title: 'Weight', unit: 'kg', type: 'daily' as const },
     { title: 'Heart Rate', unit: 'bpm', type: 'daily' as const },
     { title: 'Steps Today', unit: 'steps', type: 'daily' as const },
   ];
 
   const labDefinitions = [
-    { title: 'LDL-C', unit: 'mg/dL', type: 'lab' as const },
-    { title: 'Total Cholesterol', unit: 'mg/dL', type: 'lab' as const },
-    { title: 'HDL-C', unit: 'mg/dL', type: 'lab' as const },
+    { title: 'LDL-C', unit: 'mmol/L', type: 'lab' as const },
+    { title: 'Total Cholesterol', unit: 'mmol/L', type: 'lab' as const },
+    { title: 'HDL-C', unit: 'mmol/L', type: 'lab' as const },
   ];
 
   useEffect(() => {
@@ -74,10 +73,20 @@ const Health = () => {
       };
     }
 
+    // Check normal ranges for cholesterol in mmol/L
+    let normal = true;
+    if (metricType === 'LDL-C') {
+      normal = latestMetric.value <= 3.0; // Normal LDL-C < 3.0 mmol/L
+    } else if (metricType === 'Total Cholesterol') {
+      normal = latestMetric.value <= 5.0; // Normal Total Cholesterol < 5.0 mmol/L
+    } else if (metricType === 'HDL-C') {
+      normal = latestMetric.value >= 1.0; // Normal HDL-C > 1.0 mmol/L
+    }
+
     return {
       value: latestMetric.value.toString(),
       trend: 'stable' as const,
-      normal: true
+      normal
     };
   };
 
@@ -221,14 +230,14 @@ const Health = () => {
             <Button 
               variant="outline" 
               className="w-full justify-start"
-              onClick={() => handleQuickAction('Weight', 'lbs')}
+              onClick={() => handleQuickAction('Weight', 'kg')}
             >
               Record Weight
             </Button>
             <Button 
               variant="outline" 
               className="w-full justify-start"
-              onClick={() => handleQuickAction('LDL-C', 'mg/dL')}
+              onClick={() => handleQuickAction('LDL-C', 'mmol/L')}
             >
               Add Lab Results
             </Button>

@@ -30,6 +30,23 @@ const HealthMetricEntryForm = ({ metricType, unit, onBack, onSuccess }: HealthMe
 
   const isBloodPressure = metricType === 'Blood Pressure';
 
+  const getPlaceholderValue = () => {
+    switch (metricType) {
+      case 'Weight':
+        return '70'; // kg instead of lbs
+      case 'LDL-C':
+        return '2.5'; // mmol/L instead of mg/dL
+      case 'Total Cholesterol':
+        return '4.5'; // mmol/L instead of mg/dL
+      case 'HDL-C':
+        return '1.2'; // mmol/L instead of mg/dL
+      case 'Heart Rate':
+        return '72';
+      default:
+        return `Enter ${metricType.toLowerCase()}`;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -124,8 +141,8 @@ const HealthMetricEntryForm = ({ metricType, unit, onBack, onSuccess }: HealthMe
                   <Input
                     id="value"
                     type="number"
-                    step="0.1"
-                    placeholder={`Enter ${metricType.toLowerCase()}`}
+                    step={unit === 'mmol/L' ? '0.1' : unit === 'kg' ? '0.1' : '1'}
+                    placeholder={getPlaceholderValue()}
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                     required
