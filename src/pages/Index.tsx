@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Heart, Calendar, Activity, BookOpen, Bell } from 'lucide-react';
 import EmergencyButton from '@/components/EmergencyButton';
@@ -200,9 +201,13 @@ const Index = () => {
 
   const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education && dailyTasks.physicalActivity;
 
+  // Calculate medication stats
+  const takenCount = medications.filter(med => med.taken).length;
+  const totalCount = medications.length;
+
   const quickStats = [
     { label: 'Days since MI', value: daysSinceMI.toString(), icon: Heart, link: '/health-journey' },
-    { label: 'Medications today', value: '2/4', icon: Calendar },
+    { label: 'Medications today', value: `${takenCount}/${totalCount}`, icon: Calendar, link: '/medications' },
     { label: 'Physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
   ];
 
