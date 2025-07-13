@@ -10,7 +10,7 @@ const EmergencyButton = () => {
   return (
     <Button 
       onClick={handleEmergencyCall}
-      className="w-full bg-red-600 hover:bg-red-700 text-white py-4 text-lg font-semibold rounded-xl shadow-lg"
+      className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground py-4 text-lg font-semibold rounded-xl shadow-lg"
     >
       <Phone className="mr-2" size={20} />
       Emergency Call 112

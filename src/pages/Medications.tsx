@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Bell, BellOff, Calendar as CalendarIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -115,14 +114,14 @@ const Medications = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white shadow-sm">
+    <div className="min-h-screen bg-muted pb-20">
+      <div className="bg-background shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center">
             <Link to="/" className="mr-4">
-              <ArrowLeft className="text-gray-600" size={24} />
+              <ArrowLeft className="text-muted-foreground" size={24} />
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800">My Medications</h1>
+            <h1 className="text-xl font-semibold text-foreground">My Medications</h1>
           </div>
         </div>
       </div>
@@ -141,9 +140,9 @@ const Medications = () => {
           
           <TabsContent value="today" className="space-y-4">
             <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-2">Today's Schedule</p>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-blue-800 font-medium">
+              <p className="text-sm text-muted-foreground mb-2">Today's Schedule</p>
+              <div className="bg-accent p-4 rounded-lg">
+                <p className="text-primary font-medium">
                   {medications.filter(med => med.taken).length} of {medications.length} medications taken
                 </p>
               </div>
@@ -165,8 +164,8 @@ const Medications = () => {
                     size="sm"
                     className={`absolute top-3 right-3 ${
                       medication.notificationsEnabled 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
+                        ? 'bg-accent border-primary text-primary' 
+                        : 'bg-muted border-border text-muted-foreground'
                     }`}
                   >
                     {medication.notificationsEnabled ? (
