@@ -22,6 +22,7 @@ const Index = () => {
   const { user } = useAuth();
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   
   // Sample medications data - in a real app this would come from a database
   const [medications, setMedications] = useState<Medication[]>([
@@ -44,11 +45,28 @@ const Index = () => {
     const fetchUserProfile = async () => {
       if (user) {
         try {
+          setProfileLoading(true);
+          console.log('Fetching profile for user:', user.id);
           const profile = await profileService.getUserProfile(user.id);
+          console.log('Fetched profile:', profile);
+          
           if (profile && profile.date_of_mi) {
             setUserProfile(profile);
             const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
             setDaysSinceMI(days);
+          } else {
+            console.log('No profile found in database, checking localStorage...');
+            // Fallback to localStorage if database fetch fails or no profile exists
+            const onboardingData = localStorage.getItem('onboardingData');
+            if (onboardingData) {
+              const data = JSON.parse(onboardingData);
+              console.log('Found onboarding data in localStorage:', data);
+              setUserProfile({ name: data.name });
+              if (data.dateOfMI) {
+                const days = profileService.calculateDaysSinceMI(data.dateOfMI);
+                setDaysSinceMI(days);
+              }
+            }
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
@@ -56,12 +74,18 @@ const Index = () => {
           const onboardingData = localStorage.getItem('onboardingData');
           if (onboardingData) {
             const data = JSON.parse(onboardingData);
+            console.log('Using localStorage fallback:', data);
+            setUserProfile({ name: data.name });
             if (data.dateOfMI) {
               const days = profileService.calculateDaysSinceMI(data.dateOfMI);
               setDaysSinceMI(days);
             }
           }
+        } finally {
+          setProfileLoading(false);
         }
+      } else {
+        setProfileLoading(false);
       }
     };
 
@@ -207,7 +231,11 @@ const Index = () => {
   ];
 
   const greeting = getTimeBasedGreeting();
-  const displayName = userProfile?.name || 'there';
+  const displayName = userProfile?.name || (profileLoading ? '...' : 'there');
+  
+  console.log('Current user profile:', userProfile);
+  console.log('Display name:', displayName);
+  console.log('Profile loading:', profileLoading);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
