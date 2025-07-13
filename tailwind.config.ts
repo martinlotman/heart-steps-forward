@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,6 +20,7 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Semantic color tokens
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -61,7 +63,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Brand-specific colors for special use cases
+				'eks-white': '#ffffff',
+				'eks-deep-blue': '#0737a3',
+				'eks-cream': '#fff3dd',
+				'eks-red': '#eb0b30',
+				'eks-light-gray': '#ebebeb',
+				'eks-pale-pink': '#fffdfd'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
