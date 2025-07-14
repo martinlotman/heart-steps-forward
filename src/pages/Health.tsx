@@ -73,9 +73,15 @@ const Health = () => {
       };
     }
 
-    // Check normal ranges for cholesterol in mmol/L
+    // Check normal ranges for all metrics
     let normal = true;
-    if (metricType === 'LDL-C') {
+    if (metricType === 'Weight') {
+      normal = latestMetric.value >= 50 && latestMetric.value <= 100; // Normal weight range
+    } else if (metricType === 'Heart Rate') {
+      normal = latestMetric.value >= 60 && latestMetric.value <= 100; // Normal resting heart rate
+    } else if (metricType === 'Steps Today') {
+      normal = latestMetric.value >= 8000; // Recommended daily steps
+    } else if (metricType === 'LDL-C') {
       normal = latestMetric.value <= 3.0; // Normal LDL-C < 3.0 mmol/L
     } else if (metricType === 'Total Cholesterol') {
       normal = latestMetric.value <= 5.0; // Normal Total Cholesterol < 5.0 mmol/L
@@ -247,6 +253,27 @@ const Health = () => {
               onClick={() => handleQuickAction('Heart Rate', 'bpm')}
             >
               Track Heart Rate
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => handleQuickAction('Steps Today', 'steps')}
+            >
+              Log Daily Steps
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => handleQuickAction('Total Cholesterol', 'mmol/L')}
+            >
+              Add Total Cholesterol
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => handleQuickAction('HDL-C', 'mmol/L')}
+            >
+              Record HDL-C
             </Button>
           </div>
         </div>

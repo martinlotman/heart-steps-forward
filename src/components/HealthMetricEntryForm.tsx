@@ -33,15 +33,17 @@ const HealthMetricEntryForm = ({ metricType, unit, onBack, onSuccess }: HealthMe
   const getPlaceholderValue = () => {
     switch (metricType) {
       case 'Weight':
-        return '70'; // kg instead of lbs
-      case 'LDL-C':
-        return '2.5'; // mmol/L instead of mg/dL
-      case 'Total Cholesterol':
-        return '4.5'; // mmol/L instead of mg/dL
-      case 'HDL-C':
-        return '1.2'; // mmol/L instead of mg/dL
+        return '70';
       case 'Heart Rate':
         return '72';
+      case 'Steps Today':
+        return '10000';
+      case 'LDL-C':
+        return '2.5';
+      case 'Total Cholesterol':
+        return '4.5';
+      case 'HDL-C':
+        return '1.2';
       default:
         return `Enter ${metricType.toLowerCase()}`;
     }
