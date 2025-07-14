@@ -31,7 +31,7 @@ export const useJourneyData = (userId: string | undefined) => {
     const totalDays = Math.ceil((today.getTime() - journeyStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     // For demo purposes, create sample data with completed days
-    for (let i = 0; i < Math.max(totalDays, 15); i++) {
+    for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(journeyStartDate);
       currentDate.setDate(journeyStartDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
