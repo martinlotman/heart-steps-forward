@@ -49,17 +49,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       setLoading(true);
+      
+      // Clean up any existing auth state first
+      try {
+        await supabase.auth.signOut();
+        localStorage.removeItem('onboardingData');
+        localStorage.removeItem('onboardingComplete');
+      } catch (err) {
+        // Ignore cleanup errors
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/onboarding`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       
       if (error) {
         console.error('SignUp error:', error);
         return { error };
+      }
+      
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log('SignUp successful - email confirmation required:', data.user.email);
+        return { error: null };
       }
       
       console.log('SignUp successful:', data.user?.email);
@@ -75,6 +90,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      
+      // Clean up any existing auth state first
+      try {
+        await supabase.auth.signOut();
+        localStorage.removeItem('onboardingData');
+        localStorage.removeItem('onboardingComplete');
+      } catch (err) {
+        // Ignore cleanup errors
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -86,6 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log('SignIn successful:', data.user?.email);
+      
+      // Force a page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
       return { error: null };
     } catch (error) {
       console.error('SignIn exception:', error);
@@ -98,19 +129,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('SignOut error:', error);
-        throw error;
-      }
       
-      // Clear local storage
+      // Clear local storage first
       localStorage.removeItem('onboardingData');
       localStorage.removeItem('onboardingComplete');
+      
+      // Clear all Supabase auth keys
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) {
+        console.error('SignOut error:', error);
+      }
+      
       console.log('SignOut successful');
+      
+      // Force page reload for clean state
+      window.location.href = '/auth';
     } catch (error) {
       console.error('SignOut exception:', error);
-      throw error;
+      // Force redirect even if signOut fails
+      window.location.href = '/auth';
     } finally {
       setLoading(false);
     }

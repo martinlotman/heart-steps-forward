@@ -150,7 +150,10 @@ const Onboarding = () => {
         description: "Your health information has been saved successfully",
       });
       
-      navigate('/');
+      // Force a page reload to ensure clean state after onboarding
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } catch (error) {
       console.error('Error completing onboarding:', error);
       toast({
