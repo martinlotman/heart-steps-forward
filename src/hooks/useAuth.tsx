@@ -23,8 +23,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Get current user ID (either authenticated user or impersonated user)
   const getCurrentUserId = (): string | null => {
+    // Only allow impersonation if we have a valid authenticated user
+    if (!user?.id) {
+      return null;
+    }
+    
+    // For now, let's disable impersonation to ensure users see only their own data
+    // TODO: Implement proper admin role checking before allowing impersonation
     const impersonatedUserId = localStorage.getItem('impersonatedUserId');
-    return impersonatedUserId || user?.id || null;
+    if (impersonatedUserId) {
+      console.warn('Clearing impersonatedUserId to prevent data leakage');
+      localStorage.removeItem('impersonatedUserId');
+    }
+    
+    return user.id;
   };
 
   useEffect(() => {
@@ -142,6 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('onboardingData');
       localStorage.removeItem('onboardingComplete');
       localStorage.removeItem('impersonatedUserId');
+      
+      // Clear any other potentially problematic localStorage items
+      Object.keys(localStorage).forEach((key) => {
+        if (key.includes('impersonated') || key.includes('admin')) {
+          localStorage.removeItem(key);
+        }
+      });
       
       // Clear all Supabase auth keys
       Object.keys(localStorage).forEach((key) => {
