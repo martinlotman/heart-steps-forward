@@ -23,12 +23,17 @@ export const useJourneyData = (userId: string | undefined) => {
   const generateJourneyData = async (miDate: Date, userId: string) => {
     const data: DayProgress[] = [];
     const today = new Date();
-    const totalDays = Math.ceil((today.getTime() - miDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Start from the day after MI (recovery journey starts the day after MI)
+    const journeyStartDate = new Date(miDate);
+    journeyStartDate.setDate(miDate.getDate() + 1);
+    
+    const totalDays = Math.ceil((today.getTime() - journeyStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
     // For demo purposes, create sample data with completed days
     for (let i = 0; i < Math.max(totalDays, 15); i++) {
-      const currentDate = new Date(miDate);
-      currentDate.setDate(miDate.getDate() + i);
+      const currentDate = new Date(journeyStartDate);
+      currentDate.setDate(journeyStartDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
       
       // Create sample data - first 10 days complete, then mix of partial/incomplete
