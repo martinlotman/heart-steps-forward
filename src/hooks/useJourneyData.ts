@@ -25,32 +25,33 @@ export const useJourneyData = (userId: string | undefined) => {
     const today = new Date();
     const totalDays = Math.ceil((today.getTime() - miDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Fetch all daily tasks from Supabase
-    const { data: dailyTasks } = await supabase
-      .from('daily_tasks')
-      .select('*')
-      .eq('user_id', userId);
-
-    // Fetch all health metrics to check if user logged metrics on specific days
-    const healthMetrics = await healthMetricsService.getHealthMetrics(userId);
-    
-    for (let i = 0; i < totalDays; i++) {
+    // For demo purposes, create sample data with completed days
+    for (let i = 0; i < Math.max(totalDays, 15); i++) {
       const currentDate = new Date(miDate);
       currentDate.setDate(miDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
       
-      // Find tasks for this specific date
-      const dayTasks = dailyTasks?.find(task => task.task_date === dateKey);
+      // Create sample data - first 10 days complete, then mix of partial/incomplete
+      let medicationsCompleted = false;
+      let healthMetricsLogged = false;
+      let educationCompleted = false;
       
-      // Check if health metrics were logged on this day
-      const dayHealthMetrics = healthMetrics?.filter(metric => {
-        const metricDate = new Date(metric.recorded_at).toISOString().split('T')[0];
-        return metricDate === dateKey;
-      });
-      
-      const medicationsCompleted = dayTasks?.medications || false;
-      const healthMetricsLogged = (dayHealthMetrics && dayHealthMetrics.length > 0) || false;
-      const educationCompleted = dayTasks?.education || false;
+      if (i < 10) {
+        // First 10 days - all complete
+        medicationsCompleted = true;
+        healthMetricsLogged = true;
+        educationCompleted = true;
+      } else if (i < 12) {
+        // Days 11-12 - partial completion
+        medicationsCompleted = true;
+        healthMetricsLogged = Math.random() > 0.5;
+        educationCompleted = false;
+      } else if (i < 15) {
+        // Days 13-15 - mixed completion
+        medicationsCompleted = Math.random() > 0.3;
+        healthMetricsLogged = Math.random() > 0.4;
+        educationCompleted = Math.random() > 0.6;
+      }
       
       const tasksCompleted = [medicationsCompleted, healthMetricsLogged, educationCompleted].filter(Boolean).length;
       
