@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -154,9 +154,9 @@ const Health = () => {
               </Link>
               <h1 className="text-xl font-semibold text-foreground">Health Metrics</h1>
             </div>
-            <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => setShowEntryForm({ metricType: 'Blood Pressure', unit: 'mmHg' })}>
-              <Plus size={16} className="mr-1" />
-              Log
+            <Button size="sm" variant="outline" className="text-xs">
+              <Smartphone size={16} className="mr-1" />
+              Sync Device
             </Button>
           </div>
         </div>
