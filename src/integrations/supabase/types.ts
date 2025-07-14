@@ -321,6 +321,7 @@ export type Database = {
           instructions: string | null
           name: string
           prescribed_by: string | null
+          reminder_time: string | null
           start_date: string
           updated_at: string
           user_id: string
@@ -335,6 +336,7 @@ export type Database = {
           instructions?: string | null
           name: string
           prescribed_by?: string | null
+          reminder_time?: string | null
           start_date?: string
           updated_at?: string
           user_id: string
@@ -349,6 +351,7 @@ export type Database = {
           instructions?: string | null
           name?: string
           prescribed_by?: string | null
+          reminder_time?: string | null
           start_date?: string
           updated_at?: string
           user_id?: string
