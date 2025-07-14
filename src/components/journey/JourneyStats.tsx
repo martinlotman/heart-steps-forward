@@ -9,24 +9,24 @@ interface JourneyStatsProps {
 const JourneyStats = ({ completeDays, partialDays, incompleteDays }: JourneyStatsProps) => {
   return (
     <div className="grid grid-cols-3 gap-3 mb-6">
-      <Card className="bg-secondary border-border">
+      <Card className="bg-green-50 border-green-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{completeDays}</div>
-          <div className="text-xs text-foreground">Perfect Days</div>
+          <div className="text-2xl font-bold text-green-600">{completeDays}</div>
+          <div className="text-xs text-green-700">Perfect Days</div>
         </CardContent>
       </Card>
       
-      <Card className="bg-accent border-border">
+      <Card className="bg-yellow-50 border-yellow-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-accent-foreground">{partialDays}</div>
-          <div className="text-xs text-accent-foreground/80">Partial Days</div>
+          <div className="text-2xl font-bold text-yellow-600">{partialDays}</div>
+          <div className="text-xs text-yellow-700">Partial Days</div>
         </CardContent>
       </Card>
       
-      <Card className="bg-destructive/10 border-destructive/20">
+      <Card className="bg-red-50 border-red-200">
         <CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-destructive">{incompleteDays}</div>
-          <div className="text-xs text-destructive/80">Missed Days</div>
+          <div className="text-2xl font-bold text-red-600">{incompleteDays}</div>
+          <div className="text-xs text-red-700">Missed Days</div>
         </CardContent>
       </Card>
     </div>

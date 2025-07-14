@@ -27,7 +27,7 @@ const JourneyTimeline = ({ journeyData, onDayClick }: JourneyTimelineProps) => {
         <div className="relative">
           {/* Connecting Path */}
           <div className="absolute inset-0 flex flex-col items-center">
-            <div className="w-1 bg-border h-full rounded-full"></div>
+            <div className="w-1 bg-gray-200 h-full rounded-full"></div>
           </div>
           
           {/* Days Grid */}
