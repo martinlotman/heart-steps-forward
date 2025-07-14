@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +44,7 @@ interface AddMedicationDialogProps {
 const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>('09:00');
 
   const form = useForm({
     defaultValues: {
@@ -52,6 +53,7 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
       frequency: 'once daily',
       instructions: '',
       prescribed_by: '',
+      reminder_time: '09:00',
     },
   });
 
@@ -65,12 +67,14 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
       instructions: data.instructions || undefined,
       prescribed_by: data.prescribed_by || undefined,
       start_date: selectedDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      reminder_time: data.reminder_time,
     };
 
     onAddMedication(medicationData);
 
     form.reset();
     setSelectedDate(new Date());
+    setSelectedTime('09:00');
     setOpen(false);
   };
 
@@ -203,6 +207,31 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
                 </PopoverContent>
               </Popover>
             </div>
+
+            <FormField
+              control={form.control}
+              name="reminder_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reminder Time</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        type="time"
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          setSelectedTime(e.target.value);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <Button type="submit" className="w-full">
               Add Medication

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationService } from './notificationService';
 
 export interface Medication {
   id: string;
@@ -35,6 +36,7 @@ export interface CreateMedicationData {
   prescribed_by?: string;
   start_date: string;
   end_date?: string;
+  reminder_time: string;
 }
 
 export interface CreateIntakeData {
@@ -72,6 +74,14 @@ class MedicationService {
       .single();
 
     if (error) throw error;
+
+    // Schedule notification reminders
+    try {
+      await this.scheduleNotificationReminders(data, medicationData.reminder_time);
+    } catch (notificationError) {
+      console.error('Failed to schedule notifications:', notificationError);
+    }
+
     return data;
   }
 
@@ -219,28 +229,49 @@ class MedicationService {
     return intakes;
   }
 
-  private parseFrequencyToTimes(frequency: string): string[] {
-    // Simple frequency parsing - can be enhanced based on requirements
+  private parseFrequencyToTimes(frequency: string, baseTime?: string): string[] {
+    const defaultTime = baseTime || '08:00';
     const lowerFreq = frequency.toLowerCase();
     
     if (lowerFreq.includes('once daily') || lowerFreq.includes('once a day')) {
-      return ['08:00'];
+      return [defaultTime];
     } else if (lowerFreq.includes('twice daily') || lowerFreq.includes('twice a day')) {
-      return ['08:00', '20:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      const secondTime = `${String((hours + 12) % 24).padStart(2, '0')}:00`;
+      return [defaultTime, secondTime];
     } else if (lowerFreq.includes('three times') || lowerFreq.includes('3 times')) {
-      return ['08:00', '14:00', '20:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      const secondTime = `${String((hours + 6) % 24).padStart(2, '0')}:00`;
+      const thirdTime = `${String((hours + 12) % 24).padStart(2, '0')}:00`;
+      return [defaultTime, secondTime, thirdTime];
     } else if (lowerFreq.includes('four times') || lowerFreq.includes('4 times')) {
-      return ['08:00', '12:00', '16:00', '20:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      const times = [];
+      for (let i = 0; i < 4; i++) {
+        times.push(`${String((hours + i * 6) % 24).padStart(2, '0')}:00`);
+      }
+      return times;
     } else if (lowerFreq.includes('every 8 hours')) {
-      return ['08:00', '16:00', '00:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      return [
+        defaultTime,
+        `${String((hours + 8) % 24).padStart(2, '0')}:00`,
+        `${String((hours + 16) % 24).padStart(2, '0')}:00`
+      ];
     } else if (lowerFreq.includes('every 12 hours')) {
-      return ['08:00', '20:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      const secondTime = `${String((hours + 12) % 24).padStart(2, '0')}:00`;
+      return [defaultTime, secondTime];
     } else if (lowerFreq.includes('every 6 hours')) {
-      return ['06:00', '12:00', '18:00', '00:00'];
+      const [hours] = defaultTime.split(':').map(Number);
+      const times = [];
+      for (let i = 0; i < 4; i++) {
+        times.push(`${String((hours + i * 6) % 24).padStart(2, '0')}:00`);
+      }
+      return times;
     }
     
-    // Default to once daily
-    return ['08:00'];
+    return [defaultTime];
   }
 
   async getAdherenceStats(userId: string, days: number = 30): Promise<{
@@ -271,6 +302,28 @@ class MedicationService {
       missedCount
     };
   }
+
+  // Notification scheduling
+  private async scheduleNotificationReminders(medication: Medication, reminderTime: string): Promise<void> {
+    try {
+      // Generate daily reminders based on frequency
+      const times = this.parseFrequencyToTimes(medication.frequency, reminderTime);
+      
+      for (const time of times) {
+        const reminder = {
+          id: parseInt(medication.id.slice(-6), 16) + times.indexOf(time), // Simple ID generation
+          medicationName: medication.name,
+          time: time,
+          dosage: medication.dosage
+        };
+
+        await NotificationService.scheduleMedicationReminder(reminder);
+      }
+    } catch (error) {
+      console.error('Failed to schedule notification:', error);
+    }
+  }
+
 }
 
 export const medicationService = new MedicationService();
