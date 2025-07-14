@@ -13,7 +13,7 @@ const Education = () => {
 
   // Load completion status from localStorage
   useEffect(() => {
-    const today = new Date().toDateString();
+    const today = new Date().toISOString().split('T')[0]; // Use consistent YYYY-MM-DD format
     const savedTasks = localStorage.getItem(`dailyTasks_${today}`);
     if (savedTasks) {
       const tasks = JSON.parse(savedTasks);
