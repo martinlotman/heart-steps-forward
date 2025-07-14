@@ -9,7 +9,7 @@ interface JourneyHeaderProps {
 
 const JourneyHeader = ({ overallProgress, daysSinceMI }: JourneyHeaderProps) => {
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+    <div className="bg-[#eb0b30] text-white">
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center mb-4">
           <Link to="/" className="mr-4">
