@@ -133,6 +133,7 @@ const Health = () => {
       <HealthTimeline 
         metric={selectedMetric} 
         onBack={handleBackToHealth}
+        onAddEntry={() => handleQuickAction(selectedMetric.title, selectedMetric.unit)}
       />
     );
   }

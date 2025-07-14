@@ -16,9 +16,10 @@ interface HealthTimelineProps {
     type: 'daily' | 'lab';
   };
   onBack: () => void;
+  onAddEntry: () => void;
 }
 
-const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
+const HealthTimeline = ({ metric, onBack, onAddEntry }: HealthTimelineProps) => {
   const { user } = useAuth();
   const [data, setData] = useState<HealthMetric[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,7 +171,7 @@ const HealthTimeline = ({ metric, onBack }: HealthTimelineProps) => {
         )}
 
         <div className="mt-6">
-          <Button className="w-full bg-primary hover:bg-primary/90" onClick={onBack}>
+          <Button className="w-full bg-primary hover:bg-primary/90" onClick={onAddEntry}>
             Add New Entry
           </Button>
         </div>
