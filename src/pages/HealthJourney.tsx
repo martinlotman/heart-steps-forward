@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,17 +8,19 @@ import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
+import { dailyTasksService } from '@/services/dailyTasksService';
+import { healthMetricsService } from '@/services/healthMetricsService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DayProgress {
   day: number;
   date: string;
-  medicationsTaken: number;
-  totalMedications: number;
-  stepsLogged: boolean;
-  vitalsLogged: boolean;
-  physicalActivityLogged: boolean;
+  dateKey: string;
+  medicationsCompleted: boolean;
+  healthMetricsLogged: boolean;
+  educationCompleted: boolean;
+  tasksCompleted: number;
   status: 'complete' | 'partial' | 'incomplete';
-  dailyTasksCompleted?: boolean;
 }
 
 const HealthJourney = () => {
@@ -26,88 +29,100 @@ const HealthJourney = () => {
   const [journeyData, setJourneyData] = useState<DayProgress[]>([]);
   const [miDate, setMiDate] = useState<Date | null>(null);
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfileAndGenerateJourney = async () => {
-      if (user) {
-        try {
-          const profile = await profileService.getUserProfile(user.id);
-          let actualMiDate: Date;
-          
-          if (profile && profile.date_of_mi) {
-            actualMiDate = new Date(profile.date_of_mi);
-            const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
-            setDaysSinceMI(days);
-          } else {
-            // Fallback to localStorage
-            const onboardingData = localStorage.getItem('onboardingData');
-            if (onboardingData) {
-              const data = JSON.parse(onboardingData);
-              if (data.dateOfMI) {
-                actualMiDate = new Date(data.dateOfMI);
-                const days = profileService.calculateDaysSinceMI(data.dateOfMI);
-                setDaysSinceMI(days);
-              }
+    const fetchJourneyData = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        // Get user profile to determine MI date
+        const profile = await profileService.getUserProfile(user.id);
+        let actualMiDate: Date;
+        
+        if (profile && profile.date_of_mi) {
+          actualMiDate = new Date(profile.date_of_mi);
+          const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
+          setDaysSinceMI(days);
+        } else {
+          // Fallback to localStorage
+          const onboardingData = localStorage.getItem('onboardingData');
+          if (onboardingData) {
+            const data = JSON.parse(onboardingData);
+            if (data.dateOfMI) {
+              actualMiDate = new Date(data.dateOfMI);
+              const days = profileService.calculateDaysSinceMI(data.dateOfMI);
+              setDaysSinceMI(days);
             }
           }
-
-          if (actualMiDate) {
-            setMiDate(actualMiDate);
-            generateJourneyData(actualMiDate, daysSinceMI);
-          }
-        } catch (error) {
-          console.error('Error fetching profile:', error);
         }
+
+        if (actualMiDate) {
+          setMiDate(actualMiDate);
+          await generateJourneyData(actualMiDate, user.id);
+        }
+      } catch (error) {
+        console.error('Error fetching journey data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProfileAndGenerateJourney();
-  }, [user, daysSinceMI]);
+    fetchJourneyData();
+  }, [user]);
 
-  const generateJourneyData = (miDate: Date, totalDays: number) => {
+  const generateJourneyData = async (miDate: Date, userId: string) => {
     const data: DayProgress[] = [];
     const today = new Date();
+    const totalDays = Math.ceil((today.getTime() - miDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    for (let i = totalDays - 1; i >= 0; i--) {
-      const date = new Date(miDate);
-      date.setDate(miDate.getDate() + (totalDays - i));
-      const dateString = date.toDateString();
+    // Fetch all daily tasks from Supabase
+    const { data: dailyTasks } = await supabase
+      .from('daily_tasks')
+      .select('*')
+      .eq('user_id', userId);
+
+    // Fetch all health metrics to check if user logged metrics on specific days
+    const healthMetrics = await healthMetricsService.getHealthMetrics(userId);
+    
+    for (let i = 0; i < totalDays; i++) {
+      const currentDate = new Date(miDate);
+      currentDate.setDate(miDate.getDate() + i);
+      const dateKey = currentDate.toISOString().split('T')[0];
       
-      // Check if this day had all daily tasks completed
-      const dailyTasksCompleted = localStorage.getItem(`healthJourney_${dateString}`) === 'complete';
+      // Find tasks for this specific date
+      const dayTasks = dailyTasks?.find(task => task.task_date === dateKey);
       
-      // Check daily tasks completion
-      const savedTasks = localStorage.getItem(`dailyTasks_${dateString}`);
-      const tasks = savedTasks ? JSON.parse(savedTasks) : {};
+      // Check if health metrics were logged on this day
+      const dayHealthMetrics = healthMetrics?.filter(metric => {
+        const metricDate = new Date(metric.recorded_at).toISOString().split('T')[0];
+        return metricDate === dateKey;
+      });
       
-      // Mock some realistic progress data
-      const medicationsTaken = Math.random() > 0.3 ? Math.floor(Math.random() * 4) + 1 : 0;
-      const totalMedications = 4;
-      const stepsLogged = Math.random() > 0.4 || tasks.physicalActivity;
-      const vitalsLogged = Math.random() > 0.5 || tasks.health;
-      const physicalActivityLogged = tasks.physicalActivity || Math.random() > 0.6;
+      const medicationsCompleted = dayTasks?.medications || false;
+      const healthMetricsLogged = (dayHealthMetrics && dayHealthMetrics.length > 0) || false;
+      const educationCompleted = dayTasks?.education || false;
+      
+      const tasksCompleted = [medicationsCompleted, healthMetricsLogged, educationCompleted].filter(Boolean).length;
       
       let status: 'complete' | 'partial' | 'incomplete' = 'incomplete';
-      
-      // If daily tasks were completed, mark as complete
-      if (dailyTasksCompleted) {
+      if (tasksCompleted === 3) {
         status = 'complete';
-      } else if (medicationsTaken === totalMedications && stepsLogged && vitalsLogged && physicalActivityLogged) {
-        status = 'complete';
-      } else if (medicationsTaken > 0 || stepsLogged || vitalsLogged || physicalActivityLogged) {
+      } else if (tasksCompleted > 0) {
         status = 'partial';
       }
       
       data.push({
-        day: totalDays - i,
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        medicationsTaken,
-        totalMedications,
-        stepsLogged,
-        vitalsLogged,
-        physicalActivityLogged,
-        status,
-        dailyTasksCompleted
+        day: i + 1,
+        date: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        dateKey,
+        medicationsCompleted,
+        healthMetricsLogged,
+        educationCompleted,
+        tasksCompleted,
+        status
       });
     }
     
@@ -121,17 +136,17 @@ const HealthJourney = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'complete': return 'bg-green-400 border-green-500';
-      case 'partial': return 'bg-yellow-400 border-yellow-500';
-      default: return 'bg-red-400 border-red-500';
+      case 'complete': return 'bg-green-500 border-green-600 shadow-green-200';
+      case 'partial': return 'bg-yellow-500 border-yellow-600 shadow-yellow-200';
+      default: return 'bg-red-500 border-red-600 shadow-red-200';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'complete': return '✓';
-      case 'partial': return '○';
-      default: return '×';
+      case 'partial': return '◐';
+      default: return '○';
     }
   };
 
@@ -142,6 +157,32 @@ const HealthJourney = () => {
   const closeModal = () => {
     setSelectedDay(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 pb-20">
+        <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+          <div className="max-w-md mx-auto px-4 py-4">
+            <div className="flex items-center mb-4">
+              <Link to="/" className="mr-4">
+                <ArrowLeft className="text-white" size={24} />
+              </Link>
+              <h1 className="text-xl font-bold">My Health Journey</h1>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-md mx-auto px-4 py-6">
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your health journey...</p>
+            </div>
+          </div>
+        </div>
+        <Navigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 pb-20">
@@ -196,23 +237,57 @@ const HealthJourney = () => {
 
         {/* Journey Timeline */}
         <Card className="mb-4">
-          <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-4 text-center">{daysSinceMI}-Day Recovery Journey</h2>
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold mb-6 text-center">Your Recovery Journey</h2>
             
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-2">
-              {journeyData.map((day) => (
-                <div
-                  key={day.day}
-                  className={`relative aspect-square rounded-full border-2 flex items-center justify-center text-white font-bold text-xs transition-all hover:scale-110 cursor-pointer ${getStatusColor(day.status)}`}
-                  onClick={() => handleDayClick(day)}
-                >
-                  <span className="text-xs">{getStatusIcon(day.status)}</span>
-                  <div className="absolute -bottom-6 text-xs text-gray-600 font-normal">
-                    {day.day}
+            {/* Journey Path - Duolingo Style */}
+            <div className="relative">
+              {/* Connecting Path */}
+              <div className="absolute inset-0 flex flex-col items-center">
+                <div className="w-1 bg-gray-200 h-full rounded-full"></div>
+              </div>
+              
+              {/* Days Grid */}
+              <div className="relative space-y-4">
+                {journeyData.map((day, index) => (
+                  <div
+                    key={day.day}
+                    className={`flex items-center ${index % 2 === 0 ? 'justify-start pl-8' : 'justify-end pr-8'}`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {index % 2 !== 0 && (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-600 font-medium">Day {day.day}</div>
+                          <div className="text-xs text-gray-500">{day.date}</div>
+                        </div>
+                      )}
+                      
+                      <div
+                        className={`relative w-12 h-12 rounded-full border-4 flex items-center justify-center text-white font-bold text-sm transition-all hover:scale-110 cursor-pointer shadow-lg ${getStatusColor(day.status)}`}
+                        onClick={() => handleDayClick(day)}
+                      >
+                        <span className="text-lg">{getStatusIcon(day.status)}</span>
+                        
+                        {/* Progress indicator */}
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                          day.status === 'complete' ? 'bg-green-600 text-white' : 
+                          day.status === 'partial' ? 'bg-yellow-600 text-white' : 
+                          'bg-red-600 text-white'
+                        }`}>
+                          {day.tasksCompleted}
+                        </div>
+                      </div>
+                      
+                      {index % 2 === 0 && (
+                        <div className="text-left">
+                          <div className="text-xs text-gray-600 font-medium">Day {day.day}</div>
+                          <div className="text-xs text-gray-500">{day.date}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -220,19 +295,19 @@ const HealthJourney = () => {
         {/* Legend */}
         <Card>
           <CardContent className="p-4">
-            <h3 className="font-semibold mb-3">Legend</h3>
-            <div className="space-y-2">
+            <h3 className="font-semibold mb-3">Daily Tasks</h3>
+            <div className="space-y-2 text-sm">
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-green-400 border-2 border-green-500 flex items-center justify-center text-white text-xs font-bold mr-3">✓</div>
-                <span className="text-sm">Perfect day - All tasks completed (meds, vitals, activity, education)</span>
+                <div className="w-6 h-6 rounded-full bg-green-500 border-2 border-green-600 flex items-center justify-center text-white text-xs font-bold mr-3">3</div>
+                <span>All 3 tasks completed (Medications + Health metrics + Education)</span>
               </div>
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-yellow-400 border-2 border-yellow-500 flex items-center justify-center text-white text-xs font-bold mr-3">○</div>
-                <span className="text-sm">Partial day - Some tasks completed</span>
+                <div className="w-6 h-6 rounded-full bg-yellow-500 border-2 border-yellow-600 flex items-center justify-center text-white text-xs font-bold mr-3">1-2</div>
+                <span>Some tasks completed</span>
               </div>
               <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-red-400 border-2 border-red-500 flex items-center justify-center text-white text-xs font-bold mr-3">×</div>
-                <span className="text-sm">Missed day - No tasks completed</span>
+                <div className="w-6 h-6 rounded-full bg-red-500 border-2 border-red-600 flex items-center justify-center text-white text-xs font-bold mr-3">0</div>
+                <span>No tasks completed</span>
               </div>
             </div>
           </CardContent>
@@ -253,40 +328,40 @@ const HealthJourney = () => {
             <div className="space-y-4">
               <div className="text-sm text-gray-600">{selectedDay.date}</div>
               
-              {selectedDay.dailyTasksCompleted && (
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center text-green-700">
-                    <span className="text-sm font-medium">✓ All daily tasks completed!</span>
-                  </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Tasks Completed: {selectedDay.tasksCompleted}/3
                 </div>
-              )}
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full ${
+                      selectedDay.tasksCompleted === 3 ? 'bg-green-500' :
+                      selectedDay.tasksCompleted > 0 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${(selectedDay.tasksCompleted / 3) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Medications Taken</span>
-                  <span className={`text-sm font-medium ${selectedDay.medicationsTaken === selectedDay.totalMedications ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedDay.medicationsTaken}/{selectedDay.totalMedications}
+                  <span className="text-sm">💊 All Medications Taken</span>
+                  <span className={`text-sm font-medium ${selectedDay.medicationsCompleted ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.medicationsCompleted ? '✓ Yes' : '× No'}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Steps Logged</span>
-                  <span className={`text-sm font-medium ${selectedDay.stepsLogged ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedDay.stepsLogged ? '✓ Yes' : '× No'}
+                  <span className="text-sm">📊 Health Metrics Logged</span>
+                  <span className={`text-sm font-medium ${selectedDay.healthMetricsLogged ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.healthMetricsLogged ? '✓ Yes' : '× No'}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Vitals Logged</span>
-                  <span className={`text-sm font-medium ${selectedDay.vitalsLogged ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedDay.vitalsLogged ? '✓ Yes' : '× No'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Physical Activity</span>
-                  <span className={`text-sm font-medium ${selectedDay.physicalActivityLogged ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedDay.physicalActivityLogged ? '✓ Tracked' : '× Not tracked'}
+                  <span className="text-sm">📚 Education Completed</span>
+                  <span className={`text-sm font-medium ${selectedDay.educationCompleted ? 'text-green-600' : 'text-red-600'}`}>
+                    {selectedDay.educationCompleted ? '✓ Yes' : '× No'}
                   </span>
                 </div>
               </div>
