@@ -36,7 +36,7 @@ export interface CreateMedicationData {
   prescribed_by?: string;
   start_date: string;
   end_date?: string;
-  reminder_time: string;
+  reminder_times: string[];
 }
 
 export interface CreateIntakeData {
@@ -75,9 +75,11 @@ class MedicationService {
 
     if (error) throw error;
 
-    // Schedule notification reminders
+    // Schedule notification reminders for each time
     try {
-      await this.scheduleNotificationReminders(data, medicationData.reminder_time);
+      for (const reminderTime of medicationData.reminder_times) {
+        await this.scheduleNotificationReminders(data, reminderTime);
+      }
     } catch (notificationError) {
       console.error('Failed to schedule notifications:', notificationError);
     }

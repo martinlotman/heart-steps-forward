@@ -44,7 +44,7 @@ interface AddMedicationDialogProps {
 const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string>('09:00');
+  const [reminderTimes, setReminderTimes] = useState<string[]>(['09:00']);
 
   const form = useForm({
     defaultValues: {
@@ -53,9 +53,39 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
       frequency: 'once daily',
       instructions: '',
       prescribed_by: '',
-      reminder_time: '09:00',
     },
   });
+
+  const getTimesCountForFrequency = (frequency: string): number => {
+    switch (frequency) {
+      case 'twice daily':
+      case 'every 12 hours':
+        return 2;
+      case 'three times daily':
+      case 'every 8 hours':
+        return 3;
+      case 'four times daily':
+      case 'every 6 hours':
+        return 4;
+      default:
+        return 1;
+    }
+  };
+
+  const handleFrequencyChange = (frequency: string) => {
+    form.setValue('frequency', frequency);
+    const timesCount = getTimesCountForFrequency(frequency);
+    const newTimes = Array.from({ length: timesCount }, (_, i) => 
+      reminderTimes[i] || `${String(9 + i * 4).padStart(2, '0')}:00`
+    );
+    setReminderTimes(newTimes);
+  };
+
+  const handleTimeChange = (index: number, time: string) => {
+    const newTimes = [...reminderTimes];
+    newTimes[index] = time;
+    setReminderTimes(newTimes);
+  };
 
   const handleSubmit = (data: any) => {
     if (!selectedDate) return;
@@ -67,14 +97,14 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
       instructions: data.instructions || undefined,
       prescribed_by: data.prescribed_by || undefined,
       start_date: selectedDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-      reminder_time: data.reminder_time,
+      reminder_times: reminderTimes,
     };
 
     onAddMedication(medicationData);
 
     form.reset();
     setSelectedDate(new Date());
-    setSelectedTime('09:00');
+    setReminderTimes(['09:00']);
     setOpen(false);
   };
 
@@ -127,7 +157,7 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Frequency</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={handleFrequencyChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select frequency" />
@@ -208,30 +238,23 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
               </Popover>
             </div>
 
-            <FormField
-              control={form.control}
-              name="reminder_time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reminder Time</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        type="time"
-                        value={field.value}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          setSelectedTime(e.target.value);
-                        }}
-                        className="pl-10"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <label className="text-sm font-medium mb-2 block">Reminder Times</label>
+              {reminderTimes.map((time, index) => (
+                <div key={index} className="mb-2">
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      type="time"
+                      value={time}
+                      onChange={(e) => handleTimeChange(index, e.target.value)}
+                      className="pl-10"
+                      placeholder={`Time ${index + 1}`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <Button type="submit" className="w-full">
               Add Medication
