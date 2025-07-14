@@ -2,11 +2,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { profileService } from '@/services/profileService';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  currentUserId: string | null; // Either authenticated user or impersonated user
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -18,6 +20,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Get current user ID (either authenticated user or impersonated user)
+  const getCurrentUserId = (): string | null => {
+    const impersonatedUserId = localStorage.getItem('impersonatedUserId');
+    return impersonatedUserId || user?.id || null;
+  };
 
   useEffect(() => {
     console.log('Setting up auth state listener...');
@@ -130,9 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Clear local storage first
+      // Clear local storage first (including impersonation)
       localStorage.removeItem('onboardingData');
       localStorage.removeItem('onboardingComplete');
+      localStorage.removeItem('impersonatedUserId');
       
       // Clear all Supabase auth keys
       Object.keys(localStorage).forEach((key) => {
@@ -163,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    currentUserId: getCurrentUserId(),
     signUp,
     signIn,
     signOut

@@ -17,6 +17,22 @@ export const profileService = {
     return data;
   },
 
+  async getImpersonatedUserProfile(userId: string) {
+    // For admin viewing another user's profile
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching impersonated user profile:', error);
+      throw error;
+    }
+
+    return data;
+  },
+
   calculateDaysSinceMI(dateOfMI: string): number {
     const miDate = new Date(dateOfMI);
     const today = new Date();

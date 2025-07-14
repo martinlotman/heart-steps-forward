@@ -9,6 +9,7 @@ import DailyTasksList from '@/components/DailyTasksList';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
+import { AdminPanel } from '@/components/AdminPanel';
 
 interface Medication {
   id: number;
@@ -20,7 +21,7 @@ interface Medication {
 
 const Index = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, currentUserId } = useAuth();
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -44,11 +45,11 @@ const Index = () => {
   // Fetch user profile and calculate days since MI
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (user) {
+      if (user && currentUserId) {
         try {
           setProfileLoading(true);
-          console.log('Fetching profile for user:', user.id);
-          const profile = await profileService.getUserProfile(user.id);
+          console.log('Fetching profile for user:', currentUserId);
+          const profile = await profileService.getUserProfile(currentUserId);
           console.log('Fetched profile:', profile);
           
           if (profile && profile.date_of_mi) {
@@ -91,7 +92,7 @@ const Index = () => {
     };
 
     fetchUserProfile();
-  }, [user]);
+  }, [user, currentUserId]);
 
   // Get next medication that hasn't been taken
   const getNextMedication = () => {
@@ -258,6 +259,9 @@ const Index = () => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
+        {/* Admin Panel - Only visible to admins */}
+        <AdminPanel />
+
         {/* Emergency Button */}
         <div className="mb-6">
           <EmergencyButton />

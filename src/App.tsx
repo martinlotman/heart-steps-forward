@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { NotificationService } from "@/services/notificationService";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TranslationsProvider } from "@/hooks/useTranslations";
+import { AdminProvider } from "@/hooks/useAdminContext";
 import Index from "./pages/Index";
 import Medications from "./pages/Medications";
 import Health from "./pages/Health";
@@ -116,15 +117,17 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TranslationsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </TranslationsProvider>
+        <AdminProvider>
+          <TranslationsProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </TranslationsProvider>
+        </AdminProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
