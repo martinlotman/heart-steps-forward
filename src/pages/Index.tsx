@@ -9,15 +9,8 @@ import DailyTasksList from '@/components/DailyTasksList';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
+import { medicationService, type MedicationIntake } from '@/services/medicationService';
 import { AdminPanel } from '@/components/AdminPanel';
-
-interface Medication {
-  id: number;
-  name: string;
-  dosage: string;
-  time: string;
-  taken: boolean;
-}
 
 const Index = () => {
   const { toast } = useToast();
@@ -25,13 +18,8 @@ const Index = () => {
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  
-  // Sample medications data - in a real app this would come from a database
-  const [medications, setMedications] = useState<Medication[]>([
-    { id: 1, name: 'Metoprolol', dosage: '50mg', time: '8:00 AM', taken: false },
-    { id: 2, name: 'Lisinopril', dosage: '10mg', time: '2:00 PM', taken: false },
-    { id: 3, name: 'Atorvastatin', dosage: '20mg', time: '8:00 PM', taken: false },
-  ]);
+  const [todaysIntakes, setTodaysIntakes] = useState<MedicationIntake[]>([]);
+  const [intakesLoading, setIntakesLoading] = useState(true);
 
   // Get time-based greeting
   const getTimeBasedGreeting = () => {
@@ -42,12 +30,15 @@ const Index = () => {
     return 'Good night';
   };
 
-  // Fetch user profile and calculate days since MI
+  // Fetch user profile and today's medication intakes
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserData = async () => {
       if (user && currentUserId) {
         try {
           setProfileLoading(true);
+          setIntakesLoading(true);
+          
+          // Fetch profile
           console.log('Fetching profile for user:', currentUserId);
           const profile = await profileService.getUserProfile(currentUserId);
           console.log('Fetched profile:', profile);
@@ -70,6 +61,15 @@ const Index = () => {
               }
             }
           }
+
+          // Fetch today's medication intakes
+          try {
+            const intakes = await medicationService.getTodaysIntakes(currentUserId);
+            setTodaysIntakes(intakes);
+          } catch (intakeError) {
+            console.error('Error fetching medication intakes:', intakeError);
+          }
+          
         } catch (error) {
           console.error('Error fetching user profile:', error);
           // Fallback to localStorage if database fetch fails
@@ -85,49 +85,65 @@ const Index = () => {
           }
         } finally {
           setProfileLoading(false);
+          setIntakesLoading(false);
         }
       } else {
         setProfileLoading(false);
+        setIntakesLoading(false);
       }
     };
 
-    fetchUserProfile();
+    fetchUserData();
   }, [user, currentUserId]);
 
   // Get next medication that hasn't been taken
   const getNextMedication = () => {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    
-    const untakenMeds = medications.filter(med => !med.taken);
-    
-    if (untakenMeds.length === 0) {
+    if (intakesLoading || todaysIntakes.length === 0) {
       return null;
     }
 
-    // Convert medication times to minutes for comparison
-    const medWithMinutes = untakenMeds.map(med => {
-      const [time, period] = med.time.split(' ');
-      const [hours, minutes] = time.split(':').map(Number);
-      let totalMinutes = hours * 60 + minutes;
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Find untaken scheduled intakes
+    const untakenIntakes = todaysIntakes.filter(intake => 
+      intake.status === 'scheduled' && intake.medication
+    );
+    
+    if (untakenIntakes.length === 0) {
+      return null;
+    }
+
+    // Convert to the format expected by NextMedicationCard
+    const medicationsWithTimes = untakenIntakes.map(intake => {
+      const scheduledTime = new Date(intake.scheduled_time);
+      const medicationTime = scheduledTime.getHours() * 60 + scheduledTime.getMinutes();
       
-      if (period === 'PM' && hours !== 12) {
-        totalMinutes += 12 * 60;
-      } else if (period === 'AM' && hours === 12) {
-        totalMinutes = minutes;
-      }
-      
-      return { ...med, totalMinutes };
+      return {
+        id: parseInt(intake.id, 16) || Math.random(), // Convert UUID to number for compatibility
+        name: intake.medication!.name,
+        dosage: intake.medication!.dosage,
+        time: scheduledTime.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        }),
+        taken: false,
+        medicationTime,
+        intakeId: intake.id // Store the actual intake ID for database operations
+      };
     });
 
     // Find the next medication due
-    const nextMed = medWithMinutes
-      .filter(med => med.totalMinutes >= currentTime)
-      .sort((a, b) => a.totalMinutes - b.totalMinutes)[0] || 
-      medWithMinutes.sort((a, b) => a.totalMinutes - b.totalMinutes)[0];
+    const nextMed = medicationsWithTimes
+      .filter(med => med.medicationTime >= currentTime)
+      .sort((a, b) => a.medicationTime - b.medicationTime)[0] || 
+      medicationsWithTimes.sort((a, b) => a.medicationTime - b.medicationTime)[0];
+
+    if (!nextMed) return null;
 
     // Calculate time until next medication
-    const timeDiff = nextMed.totalMinutes - currentTime;
+    const timeDiff = nextMed.medicationTime - currentTime;
     let timeUntil = '';
     
     if (timeDiff > 0) {
@@ -147,28 +163,58 @@ const Index = () => {
 
   const nextMedication = getNextMedication();
 
-  const handleMarkTaken = (medicationId: number) => {
-    setMedications(prev => 
-      prev.map(med => 
-        med.id === medicationId ? { ...med, taken: true } : med
-      )
-    );
-    
-    const medication = medications.find(med => med.id === medicationId);
-    if (medication) {
+  const handleMarkTaken = async (medicationId: number) => {
+    if (!currentUserId) return;
+
+    try {
+      // Find the intake by medication ID (we stored intakeId in the medication object)
+      const intake = todaysIntakes.find(intake => {
+        const convertedId = parseInt(intake.id, 16) || Math.random();
+        return convertedId === medicationId;
+      });
+
+      if (!intake) {
+        toast({
+          title: "Error",
+          description: "Medication intake not found",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Mark as taken in database
+      await medicationService.markMedicationTaken(intake.id);
+      
+      // Update local state
+      setTodaysIntakes(prev => 
+        prev.map(prevIntake => 
+          prevIntake.id === intake.id 
+            ? { ...prevIntake, status: 'taken' as const, taken_at: new Date().toISOString() }
+            : prevIntake
+        )
+      );
+      
       toast({
         title: "Medication taken",
-        description: `${medication.name} marked as taken`,
+        description: `${intake.medication?.name} marked as taken`,
+      });
+    } catch (error) {
+      console.error('Error marking medication as taken:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark medication as taken",
+        variant: "destructive"
       });
     }
   };
 
   const handleUpdateMedication = (medicationId: number, newTime: string) => {
-    setMedications(prev => 
-      prev.map(med => 
-        med.id === medicationId ? { ...med, time: newTime } : med
-      )
-    );
+    // For now, just show a toast - updating medication schedules would require 
+    // more complex logic to update the medication's reminder_times
+    toast({
+      title: "Feature coming soon",
+      description: "Medication schedule updates will be available soon",
+    });
   };
 
   // Daily task completion state
@@ -203,8 +249,8 @@ const Index = () => {
   const allTasksCompleted = dailyTasks.medications && dailyTasks.health && dailyTasks.education && dailyTasks.physicalActivity;
 
   // Calculate medication stats
-  const takenCount = medications.filter(med => med.taken).length;
-  const totalCount = medications.length;
+  const takenCount = todaysIntakes.filter(intake => intake.status === 'taken').length;
+  const totalCount = todaysIntakes.length;
 
   const quickStats = [
     { label: 'Days since MI', value: daysSinceMI.toString(), icon: Heart, link: '/health-journey' },
