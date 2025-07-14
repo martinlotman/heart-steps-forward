@@ -226,60 +226,6 @@ const Health = () => {
           </div>
         </div>
 
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
-          <div className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('Blood Pressure', 'mmHg')}
-            >
-              Log Blood Pressure
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('Weight', 'kg')}
-            >
-              Record Weight
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('LDL-C', 'mmol/L')}
-            >
-              Add Lab Results
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('Heart Rate', 'bpm')}
-            >
-              Track Heart Rate
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('Steps Today', 'steps')}
-            >
-              Log Daily Steps
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('Total Cholesterol', 'mmol/L')}
-            >
-              Add Total Cholesterol
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start"
-              onClick={() => handleQuickAction('HDL-C', 'mmol/L')}
-            >
-              Record HDL-C
-            </Button>
-          </div>
-        </div>
       </div>
 
       <Navigation />
