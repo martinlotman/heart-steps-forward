@@ -154,9 +154,11 @@ const Health = () => {
               </Link>
               <h1 className="text-xl font-semibold text-foreground">Health Metrics</h1>
             </div>
-            <Button size="sm" variant="outline" className="text-xs">
-              <Smartphone size={16} className="mr-1" />
-              Sync Device
+            <Button asChild size="sm" variant="outline" className="text-xs">
+              <Link to="/health/sync">
+                <Smartphone size={16} className="mr-1" />
+                Sync Device
+              </Link>
             </Button>
           </div>
         </div>

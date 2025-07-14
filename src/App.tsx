@@ -12,6 +12,7 @@ import { AdminProvider } from "@/hooks/useAdminContext";
 import Index from "./pages/Index";
 import Medications from "./pages/Medications";
 import Health from "./pages/Health";
+import HealthSync from "./pages/HealthSync";
 import Education from "./pages/Education";
 import Profile from "./pages/Profile";
 import HealthJourney from "./pages/HealthJourney";
@@ -100,7 +101,8 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/medications" element={<Medications />} />  
-        <Route path="/health" element={<Health />} />
+            <Route path="/health" element={<Health />} />
+            <Route path="/health/sync" element={<HealthSync />} />
         <Route path="/education" element={<Education />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/health-journey" element={<HealthJourney />} />
