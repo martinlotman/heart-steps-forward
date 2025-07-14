@@ -115,7 +115,7 @@ const DailyRecommendationCard = ({ recommendation, isCompleted, onComplete }: Da
                 <div className="flex items-center text-blue-700">
                   <ExternalLink size={16} className="mr-2" />
                   <a 
-                    href={recommendation.Reference} 
+                    href={recommendation.Reference.split('�').pop() || recommendation.Reference} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-sm hover:underline"
