@@ -24,9 +24,7 @@ const DailyRecommendationCard = ({ recommendation, isCompleted, onComplete }: Da
   const { toast } = useToast();
 
   const handleTaskClick = () => {
-    if (!isCompleted) {
-      setIsExpanded(!isExpanded);
-    }
+    setIsExpanded(!isExpanded);
   };
 
   const handleMarkComplete = async () => {
@@ -101,7 +99,7 @@ const DailyRecommendationCard = ({ recommendation, isCompleted, onComplete }: Da
         </div>
       </CardHeader>
 
-      {isExpanded && !isCompleted && (
+      {isExpanded && (
         <CardContent>
           <div className="space-y-4">
             {recommendation.Recommendation && (
@@ -129,16 +127,18 @@ const DailyRecommendationCard = ({ recommendation, isCompleted, onComplete }: Da
               </div>
             )}
 
-            <Button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMarkComplete();
-              }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={showCompletion}
-            >
-              {showCompletion ? 'Completing...' : 'Mark as Complete'}
-            </Button>
+            {!isCompleted && (
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkComplete();
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={showCompletion}
+              >
+                {showCompletion ? 'Completing...' : 'Mark as Complete'}
+              </Button>
+            )}
           </div>
         </CardContent>
       )}
