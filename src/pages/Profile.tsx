@@ -1,17 +1,20 @@
 
-import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle } from 'lucide-react';
+import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
+import { ManageDataDialog } from '@/components/ManageDataDialog';
 import { useState, useEffect } from 'react';
 
 const Profile = () => {
   const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+  const [showManageData, setShowManageData] = useState(false);
 
   // Fetch user profile
   useEffect(() => {
@@ -44,6 +47,27 @@ const Profile = () => {
 
     fetchUserProfile();
   }, [user]);
+
+  const handleDataUpdated = () => {
+    // Refresh profile data after update
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const profile = await profileService.getUserProfile(user.id);
+          if (profile) {
+            setUserProfile(profile);
+            if (profile.date_of_mi) {
+              const days = profileService.calculateDaysSinceMI(profile.date_of_mi);
+              setDaysSinceMI(days);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+    fetchUserProfile();
+  };
 
   const getInitials = (name: string) => {
     if (!name) return 'JD';
@@ -94,6 +118,17 @@ const Profile = () => {
           </div>
         </div>
 
+        <div className="mb-6">
+          <Button 
+            onClick={() => setShowManageData(true)}
+            className="w-full"
+            variant="outline"
+          >
+            <Database className="mr-2" size={16} />
+            Manage My Data
+          </Button>
+        </div>
+
         <div className="space-y-3">
           {menuItems.map((item, index) => (
             <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
@@ -110,6 +145,12 @@ const Profile = () => {
           ))}
         </div>
       </div>
+
+      <ManageDataDialog
+        open={showManageData}
+        onOpenChange={setShowManageData}
+        onDataUpdated={handleDataUpdated}
+      />
 
       <Navigation />
     </div>
