@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
-import { Calendar, Clock, Plus, X } from 'lucide-react';
+import { Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -27,64 +35,42 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CreateMedicationData } from '@/services/medicationService';
 
 interface AddMedicationDialogProps {
-  onAddMedication: (medication: {
-    name: string;
-    dosage: string;
-    time: string;
-    startDate: Date;
-    frequency: string;
-  }) => void;
+  onAddMedication: (medication: CreateMedicationData) => void;
 }
 
 const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTimes, setSelectedTimes] = useState<string[]>(['']);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const form = useForm({
     defaultValues: {
       name: '',
       dosage: '',
-      frequency: 'daily',
+      frequency: 'once daily',
+      instructions: '',
+      prescribed_by: '',
     },
   });
-
-  const addTimeSlot = () => {
-    setSelectedTimes([...selectedTimes, '']);
-  };
-
-  const removeTimeSlot = (index: number) => {
-    if (selectedTimes.length > 1) {
-      setSelectedTimes(selectedTimes.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateTime = (index: number, time: string) => {
-    const newTimes = [...selectedTimes];
-    newTimes[index] = time;
-    setSelectedTimes(newTimes);
-  };
 
   const handleSubmit = (data: any) => {
     if (!selectedDate) return;
     
-    selectedTimes.forEach((time) => {
-      if (time) {
-        onAddMedication({
-          name: data.name,
-          dosage: data.dosage,
-          time: time,
-          startDate: selectedDate,
-          frequency: data.frequency,
-        });
-      }
-    });
+    const medicationData: CreateMedicationData = {
+      name: data.name,
+      dosage: data.dosage,
+      frequency: data.frequency,
+      instructions: data.instructions || undefined,
+      prescribed_by: data.prescribed_by || undefined,
+      start_date: selectedDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+    };
+
+    onAddMedication(medicationData);
 
     form.reset();
-    setSelectedDate(undefined);
-    setSelectedTimes(['']);
+    setSelectedDate(new Date());
     setOpen(false);
   };
 
@@ -137,14 +123,54 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Frequency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="once daily">Once Daily</SelectItem>
+                      <SelectItem value="twice daily">Twice Daily</SelectItem>
+                      <SelectItem value="three times daily">Three Times Daily</SelectItem>
+                      <SelectItem value="four times daily">Four Times Daily</SelectItem>
+                      <SelectItem value="every 6 hours">Every 6 Hours</SelectItem>
+                      <SelectItem value="every 8 hours">Every 8 Hours</SelectItem>
+                      <SelectItem value="every 12 hours">Every 12 Hours</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="as needed">As Needed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Instructions (Optional)</FormLabel>
                   <FormControl>
-                    <select {...field} className="w-full p-2 border rounded-md">
-                      <option value="daily">Daily</option>
-                      <option value="twice-daily">Twice Daily</option>
-                      <option value="three-times">Three Times Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="as-needed">As Needed</option>
-                    </select>
+                    <Textarea 
+                      placeholder="e.g., Take with food, avoid alcohol"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="prescribed_by"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prescribed By (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Dr. Smith" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -176,41 +202,6 @@ const AddMedicationDialog = ({ onAddMedication }: AddMedicationDialogProps) => {
                   />
                 </PopoverContent>
               </Popover>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Times</label>
-              {selectedTimes.map((time, index) => (
-                <div key={index} className="flex items-center gap-2 mb-2">
-                  <Clock className="text-gray-400" size={16} />
-                  <Input
-                    type="time"
-                    value={time}
-                    onChange={(e) => updateTime(index, e.target.value)}
-                    className="flex-1"
-                  />
-                  {selectedTimes.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeTimeSlot(index)}
-                    >
-                      <X size={16} />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTimeSlot}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-1" />
-                Add Time
-              </Button>
             </div>
 
             <Button type="submit" className="w-full">
