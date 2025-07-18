@@ -30,33 +30,47 @@ export const useJourneyData = (userId: string | undefined) => {
     
     const totalDays = Math.ceil((today.getTime() - journeyStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // For demo purposes, create sample data with completed days
+    // Get all daily tasks from database
+    const { data: dailyTasks } = await supabase
+      .from('daily_tasks')
+      .select('*')
+      .eq('user_id', userId);
+
+    // Get all medication intakes
+    const { data: medicationIntakes } = await supabase
+      .from('medication_intakes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'taken');
+
+    // Get all health metrics
+    const { data: healthMetrics } = await supabase
+      .from('health_metrics')
+      .select('*')
+      .eq('user_id', userId);
+    
     for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(journeyStartDate);
       currentDate.setDate(journeyStartDate.getDate() + i);
       const dateKey = currentDate.toISOString().split('T')[0];
       
-      // Create sample data - first 10 days complete, then mix of partial/incomplete
-      let medicationsCompleted = false;
-      let healthMetricsLogged = false;
-      let educationCompleted = false;
+      // Check actual data for this date
+      const dailyTask = dailyTasks?.find(task => task.task_date === dateKey);
       
-      if (i < 10) {
-        // First 10 days - all complete
-        medicationsCompleted = true;
-        healthMetricsLogged = true;
-        educationCompleted = true;
-      } else if (i < 12) {
-        // Days 11-12 - partial completion
-        medicationsCompleted = true;
-        healthMetricsLogged = Math.random() > 0.5;
-        educationCompleted = false;
-      } else if (i < 15) {
-        // Days 13-15 - mixed completion
-        medicationsCompleted = Math.random() > 0.3;
-        healthMetricsLogged = Math.random() > 0.4;
-        educationCompleted = Math.random() > 0.6;
-      }
+      // Check medications taken on this date
+      const medicationsOnDate = medicationIntakes?.filter(intake => 
+        intake.taken_at?.split('T')[0] === dateKey
+      ) || [];
+      
+      // Check health metrics logged on this date
+      const healthMetricsOnDate = healthMetrics?.filter(metric => 
+        metric.recorded_at?.split('T')[0] === dateKey
+      ) || [];
+      
+      // Determine completion status based on actual data
+      const medicationsCompleted = dailyTask?.medications === true || medicationsOnDate.length > 0;
+      const healthMetricsLogged = dailyTask?.health === true || healthMetricsOnDate.length > 0;
+      const educationCompleted = dailyTask?.education === true;
       
       const tasksCompleted = [medicationsCompleted, healthMetricsLogged, educationCompleted].filter(Boolean).length;
       
