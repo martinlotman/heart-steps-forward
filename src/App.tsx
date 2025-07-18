@@ -35,11 +35,22 @@ const AppRoutes = () => {
 
   useEffect(() => {
     console.log('User changed:', user?.email, 'Loading:', loading);
-    // Check if onboarding is complete when user changes
+    // Check if onboarding is complete by verifying user has a profile in database
     if (user) {
-      const onboardingComplete = localStorage.getItem('onboardingComplete');
-      console.log('Onboarding complete status:', onboardingComplete);
-      setIsOnboardingComplete(onboardingComplete === 'true');
+      const checkOnboardingStatus = async () => {
+        try {
+          // Import profileService
+          const { profileService } = await import('@/services/profileService');
+          const profile = await profileService.getUserProfile(user.id);
+          const hasProfile = !!profile;
+          console.log('Onboarding complete status:', hasProfile);
+          setIsOnboardingComplete(hasProfile);
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          setIsOnboardingComplete(false);
+        }
+      };
+      checkOnboardingStatus();
     } else {
       setIsOnboardingComplete(null);
     }
