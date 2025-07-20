@@ -8,6 +8,7 @@ import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
 import { ManageDataDialog } from '@/components/ManageDataDialog';
+import { NotificationPreferencesDialog } from '@/components/NotificationPreferencesDialog';
 import { useState, useEffect } from 'react';
 
 const Profile = () => {
@@ -15,6 +16,7 @@ const Profile = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
   const [showManageData, setShowManageData] = useState(false);
+  const [showNotificationPrefs, setShowNotificationPrefs] = useState(false);
 
   // Fetch user profile
   useEffect(() => {
@@ -82,7 +84,7 @@ const Profile = () => {
   const userInitials = getInitials(userName);
 
   const menuItems = [
-    { icon: Bell, title: 'Notifications', description: 'Manage your medication reminders' },
+    { icon: Bell, title: 'Notifications', description: 'Manage your medication reminders', onClick: () => setShowNotificationPrefs(true) },
     { icon: User, title: 'Personal Info', description: 'Update your health information', onClick: () => setShowManageData(true) },
     { icon: Shield, title: 'Emergency Contacts', description: 'Manage your emergency contacts' },
     { icon: Settings, title: 'Settings', description: 'App preferences and privacy' },
@@ -144,6 +146,11 @@ const Profile = () => {
         open={showManageData}
         onOpenChange={setShowManageData}
         onDataUpdated={handleDataUpdated}
+      />
+
+      <NotificationPreferencesDialog
+        open={showNotificationPrefs}
+        onOpenChange={setShowNotificationPrefs}
       />
 
       <Navigation />
