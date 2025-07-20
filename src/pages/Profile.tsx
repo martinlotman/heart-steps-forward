@@ -1,5 +1,5 @@
 
-import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle, Database } from 'lucide-react';
+import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -83,7 +83,7 @@ const Profile = () => {
 
   const menuItems = [
     { icon: Bell, title: 'Notifications', description: 'Manage your medication reminders' },
-    { icon: User, title: 'Personal Info', description: 'Update your health information' },
+    { icon: User, title: 'Personal Info', description: 'Update your health information', onClick: () => setShowManageData(true) },
     { icon: Shield, title: 'Emergency Contacts', description: 'Manage your emergency contacts' },
     { icon: Settings, title: 'Settings', description: 'App preferences and privacy' },
     { icon: HelpCircle, title: 'Help & Support', description: 'Get help and contact support' },
@@ -118,20 +118,14 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <Button 
-            onClick={() => setShowManageData(true)}
-            className="w-full"
-            variant="outline"
-          >
-            <Database className="mr-2" size={16} />
-            Manage My Data
-          </Button>
-        </div>
 
         <div className="space-y-3">
           {menuItems.map((item, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card 
+              key={index} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={item.onClick}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center">
                   <item.icon className="text-gray-500 mr-4" size={24} />
