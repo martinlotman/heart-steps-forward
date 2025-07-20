@@ -357,6 +357,7 @@ const PhysicalActivity = () => {
 
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Activity Goals</h2>
+              <p className="text-sm text-gray-600 mt-1">Set your goals together with your rehabilitation specialist</p>
             </div>
 
             {goals.map((goal) => (
