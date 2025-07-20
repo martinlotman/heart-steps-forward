@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Activity, Target, TrendingUp, Plus, Check, Clock, Smartphone, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Activity, Target, TrendingUp, Plus, Check, Clock, Smartphone, RefreshCw, CalendarIcon, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import Navigation from '@/components/Navigation';
 import { useHealthSync } from '@/hooks/useHealthSync';
 
@@ -112,6 +116,9 @@ const PhysicalActivity = () => {
     { day: 'Sat', minutes: 15 },
     { day: 'Sun', minutes: 0 }
   ]);
+
+  // Rehabilitation visit state
+  const [nextVisitDate, setNextVisitDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (isConnected) {
@@ -319,6 +326,67 @@ const PhysicalActivity = () => {
           </TabsContent>
 
           <TabsContent value="goals" className="space-y-4">
+            {/* Rehabilitation Visit Section */}
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <CalendarIcon className="mr-2 text-blue-600" size={20} />
+                    <h3 className="font-medium text-gray-800">Next Rehabilitation Visit</h3>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    {nextVisitDate ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="bg-blue-50 px-3 py-2 rounded-lg">
+                          <p className="text-sm font-medium text-blue-800">
+                            {format(nextVisitDate, 'EEEE, MMMM d, yyyy')}
+                          </p>
+                          <p className="text-xs text-blue-600 flex items-center mt-1">
+                            <Clock size={12} className="mr-1" />
+                            {Math.ceil((nextVisitDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 text-gray-500">
+                        <MapPin size={16} />
+                        <span className="text-sm">No visit scheduled</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "ml-3",
+                          !nextVisitDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-1" size={14} />
+                        {nextVisitDate ? "Change" : "Schedule"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={nextVisitDate}
+                        onSelect={setNextVisitDate}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-800">Activity Goals</h2>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
