@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
 import { medicationService, type MedicationIntake } from '@/services/medicationService';
 import { AdminPanel } from '@/components/AdminPanel';
+import { activityProgressService } from '@/services/activityProgressService';
 
 const Index = () => {
   const { toast } = useToast();
@@ -20,6 +21,7 @@ const Index = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [todaysIntakes, setTodaysIntakes] = useState<MedicationIntake[]>([]);
   const [intakesLoading, setIntakesLoading] = useState(true);
+  const [activityProgress, setActivityProgress] = useState<number>(0);
 
   // Get time-based greeting
   const getTimeBasedGreeting = () => {
@@ -68,6 +70,14 @@ const Index = () => {
             setTodaysIntakes(intakes);
           } catch (intakeError) {
             console.error('Error fetching medication intakes:', intakeError);
+          }
+
+          // Fetch weekly activity progress
+          try {
+            const progress = await activityProgressService.getWeeklyProgress(currentUserId);
+            setActivityProgress(progress.overallPercentage);
+          } catch (progressError) {
+            console.error('Error fetching activity progress:', progressError);
           }
           
         } catch (error) {
@@ -255,7 +265,7 @@ const Index = () => {
   const quickStats = [
     { label: 'Days since MI', value: daysSinceMI.toString(), icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: `${takenCount}/${totalCount}`, icon: Calendar, link: '/medications' },
-    { label: 'Rehabilitation and physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
+    { label: 'Rehabilitation and physical activity', value: `${activityProgress}%`, icon: Activity, link: '/physical-activity' },
   ];
 
   const dailyTaskItems = [
