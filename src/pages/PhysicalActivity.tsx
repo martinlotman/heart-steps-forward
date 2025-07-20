@@ -227,7 +227,7 @@ const PhysicalActivity = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="goals">Goals</TabsTrigger>
+            <TabsTrigger value="goals">Rehabilitation</TabsTrigger>
             <TabsTrigger value="recommendations">Tips</TabsTrigger>
           </TabsList>
 
