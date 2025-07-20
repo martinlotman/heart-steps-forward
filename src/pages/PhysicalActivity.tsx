@@ -291,30 +291,6 @@ const PhysicalActivity = () => {
                 />
               </div>
             </div>
-
-            {/* Quick Goals Summary */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-800">Quick Goals Summary</h3>
-              {goals.slice(0, 2).map((goal) => (
-                <Card key={goal.id} className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-gray-800">{goal.title}</h3>
-                    <span className="text-sm font-medium text-blue-600">
-                      {Math.round(getProgressPercentage(goal.current, goal.target))}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${getProgressPercentage(goal.current, goal.target)}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {goal.current} / {goal.target} {goal.unit}
-                  </p>
-                </Card>
-              ))}
-            </div>
           </TabsContent>
 
           <TabsContent value="goals" className="space-y-4">
