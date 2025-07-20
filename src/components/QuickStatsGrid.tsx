@@ -20,20 +20,20 @@ const QuickStatsGrid = ({ stats }: QuickStatsGridProps) => {
       {stats.map((stat, index) => (
         stat.link ? (
           <Link key={index} to={stat.link}>
-            <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <stat.icon className="mx-auto mb-2 text-primary" size={24} />
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <Card className="text-center hover:shadow-md transition-shadow cursor-pointer h-24">
+              <CardContent className="p-3 h-full flex flex-col justify-center">
+                <stat.icon className="mx-auto mb-1 text-primary" size={20} />
+                <p className="text-lg font-bold text-foreground leading-tight">{stat.value}</p>
+                <p className="text-xs text-muted-foreground leading-tight">{stat.label}</p>
               </CardContent>
             </Card>
           </Link>
         ) : (
-          <Card key={index} className="text-center">
-            <CardContent className="p-4">
-              <stat.icon className="mx-auto mb-2 text-primary" size={24} />
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+          <Card key={index} className="text-center h-24">
+            <CardContent className="p-3 h-full flex flex-col justify-center">
+              <stat.icon className="mx-auto mb-1 text-primary" size={20} />
+              <p className="text-lg font-bold text-foreground leading-tight">{stat.value}</p>
+              <p className="text-xs text-muted-foreground leading-tight">{stat.label}</p>
             </CardContent>
           </Card>
         )
