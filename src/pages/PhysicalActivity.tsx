@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Navigation from '@/components/Navigation';
+import StepsTracker from '@/components/StepsTracker';
+import ActivityChart from '@/components/ActivityChart';
 import { useHealthSync } from '@/hooks/useHealthSync';
 
 interface ActivityGoal {
@@ -239,70 +241,31 @@ const PhysicalActivity = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            {/* Today's Summary */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <Activity className="mr-2 text-blue-600" size={20} />
-                  Today's Activity
-                  {isConnected && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      <Smartphone size={10} className="mr-1" />
-                      Synced
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {isConnected ? getTodaysSteps().toLocaleString() : '5,420'}
-                    </p>
-                    <p className="text-xs text-gray-500">Steps</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">25</p>
-                    <p className="text-xs text-gray-500">Active min</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600">
-                      {isConnected ? getTodaysCalories() : '180'}
-                    </p>
-                    <p className="text-xs text-gray-500">Calories</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Weekly Progress Chart */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Weekly Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-end justify-between h-24 space-x-2">
-                  {weeklyProgress.map((day, index) => (
-                    <div key={index} className="flex flex-col items-center flex-1">
-                      <div 
-                        className="w-full bg-blue-200 rounded-t"
-                        style={{ 
-                          height: `${Math.max((day.minutes / 40) * 100, 5)}%`,
-                          backgroundColor: day.minutes > 0 ? '#3B82F6' : '#E5E7EB'
-                        }}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">{day.day}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 mt-2 text-center">
-                  Total: {weeklyProgress.reduce((sum, day) => sum + day.minutes, 0)} minutes this week
-                </p>
-              </CardContent>
-            </Card>
+            {/* Today's Activity Overview */}
+            <div className="grid grid-cols-1 gap-4">
+              {/* Daily Steps Tracker */}
+              <StepsTracker 
+                goal={goals.find(g => g.type === 'steps')?.target || 8000}
+                onStepsUpdate={(steps) => updateGoalProgress('1', steps)}
+              />
+              
+              {/* Weekly Activity Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ActivityChart 
+                  activityType="cardio" 
+                  title="Weekly Cardio"
+                />
+                
+                <ActivityChart 
+                  activityType="strength" 
+                  title="Strength Training"
+                />
+              </div>
+            </div>
 
             {/* Quick Goals Summary */}
             <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-gray-800">Quick Goals Summary</h3>
               {goals.slice(0, 2).map((goal) => (
                 <Card key={goal.id} className="p-4">
                   <div className="flex items-center justify-between mb-2">
