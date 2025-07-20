@@ -244,46 +244,22 @@ const PhysicalActivity = () => {
             {/* Today's Activity Overview */}
             <div className="grid grid-cols-1 gap-4">
               {/* Daily Steps Tracker */}
-              <div className="relative">
-                <StepsTracker 
-                  goal={goals.find(g => g.type === 'steps')?.target || 8000}
-                  onStepsUpdate={(steps) => updateGoalProgress('1', steps)}
-                />
-                <div className="absolute top-4 right-4">
-                  <Button size="sm" variant="outline" className="bg-white shadow-sm">
-                    <Plus size={14} className="mr-1" />
-                    Set Goal
-                  </Button>
-                </div>
-              </div>
+              <StepsTracker 
+                goal={goals.find(g => g.type === 'steps')?.target || 8000}
+                onStepsUpdate={(steps) => updateGoalProgress('1', steps)}
+              />
               
               {/* Weekly Activity Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <ActivityChart 
-                    activityType="cardio" 
-                    title="Weekly Cardio"
-                  />
-                  <div className="absolute top-4 right-4">
-                    <Button size="sm" variant="outline" className="bg-white shadow-sm">
-                      <Plus size={14} className="mr-1" />
-                      Set Goal
-                    </Button>
-                  </div>
-                </div>
+                <ActivityChart 
+                  activityType="cardio" 
+                  title="Weekly Cardio"
+                />
                 
-                <div className="relative">
-                  <ActivityChart 
-                    activityType="strength" 
-                    title="Strength Training"
-                  />
-                  <div className="absolute top-4 right-4">
-                    <Button size="sm" variant="outline" className="bg-white shadow-sm">
-                      <Plus size={14} className="mr-1" />
-                      Set Goal
-                    </Button>
-                  </div>
-                </div>
+                <ActivityChart 
+                  activityType="strength" 
+                  title="Strength Training"
+                />
               </div>
             </div>
 
@@ -386,7 +362,13 @@ const PhysicalActivity = () => {
                       <h3 className="font-medium text-gray-800">{goal.title}</h3>
                       <p className="text-sm text-gray-600">{goal.description}</p>
                     </div>
-                    <Target className="text-blue-600" size={20} />
+                    <div className="flex items-center space-x-2">
+                      <Button size="sm" variant="outline">
+                        <Plus size={14} className="mr-1" />
+                        Set Goal
+                      </Button>
+                      <Target className="text-blue-600" size={20} />
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
