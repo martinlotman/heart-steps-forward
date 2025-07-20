@@ -115,27 +115,36 @@ export const therapeuticGoalsService = {
   },
 
   async initializeDefaultGoals(userId: string): Promise<TherapeuticGoal[]> {
+    // First, try to get existing goals for this user
     const existingGoals = await this.getTherapeuticGoals(userId);
     
-    if (existingGoals.length === 0) {
-      // Create all default goals
-      const promises = defaultTherapeuticGoals.map(goal =>
-        this.createTherapeuticGoal({
-          goal_type: goal.goal_type,
-          target_value: goal.target_value,
-          unit: goal.unit
-        }, userId)
-      );
-
-      try {
-        const createdGoals = await Promise.all(promises);
-        return createdGoals;
-      } catch (error) {
-        console.error('Error initializing default goals:', error);
-        throw error;
-      }
+    if (existingGoals.length > 0) {
+      // User already has goals, return them
+      return existingGoals;
     }
 
-    return existingGoals;
+    // User has no goals, create default ones
+    console.log('Initializing default therapeutic goals for user:', userId);
+    const promises = defaultTherapeuticGoals.map(goal =>
+      this.createTherapeuticGoal({
+        goal_type: goal.goal_type,
+        target_value: goal.target_value,
+        unit: goal.unit
+      }, userId)
+    );
+
+    try {
+      const createdGoals = await Promise.all(promises);
+      console.log('Created default therapeutic goals:', createdGoals.length);
+      return createdGoals;
+    } catch (error) {
+      console.error('Error initializing default goals:', error);
+      // If creation fails, try to return any goals that might have been created
+      const fallbackGoals = await this.getTherapeuticGoals(userId);
+      if (fallbackGoals.length > 0) {
+        return fallbackGoals;
+      }
+      throw error;
+    }
   }
 };

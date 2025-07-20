@@ -31,7 +31,9 @@ const TherapeuticGoalsTable = () => {
 
     try {
       setLoading(true);
+      console.log('Loading therapeutic goals for user:', user.id);
       const userGoals = await therapeuticGoalsService.initializeDefaultGoals(user.id);
+      console.log('Loaded goals:', userGoals.length);
       setGoals(userGoals);
     } catch (error) {
       console.error('Error loading therapeutic goals:', error);
@@ -56,10 +58,12 @@ const TherapeuticGoalsTable = () => {
     if (!editingGoal) return;
 
     try {
+      console.log('Saving therapeutic goal:', editingGoal.id, 'with value:', editingGoal.target_value);
       const updatedGoal = await therapeuticGoalsService.updateTherapeuticGoal(editingGoal.id, {
         target_value: editingGoal.target_value
       });
 
+      // Update the local state with the saved goal
       setGoals(prevGoals =>
         prevGoals.map(goal =>
           goal.id === updatedGoal.id ? updatedGoal : goal
@@ -67,15 +71,16 @@ const TherapeuticGoalsTable = () => {
       );
 
       setEditingGoal(null);
+      console.log('Therapeutic goal saved successfully');
       toast({
         title: "Success",
-        description: "Therapeutic goal updated successfully",
+        description: "Your therapeutic goal has been saved and will persist across sessions",
       });
     } catch (error) {
       console.error('Error updating therapeutic goal:', error);
       toast({
         title: "Error",
-        description: "Failed to update therapeutic goal",
+        description: "Failed to save therapeutic goal. Please try again.",
         variant: "destructive",
       });
     }
