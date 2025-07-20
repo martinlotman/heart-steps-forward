@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import Navigation from '@/components/Navigation';
 import DailyRecommendationCard from '@/components/DailyRecommendationCard';
+import TherapeuticGoalsTable from '@/components/TherapeuticGoalsTable';
 import { useDailyRecommendations } from '@/hooks/useDailyRecommendations';
 
 const Education = () => {
@@ -156,6 +157,11 @@ const Education = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Therapeutic Goals Table */}
+        <div className="mt-8">
+          <TherapeuticGoalsTable />
+        </div>
       </div>
 
       <Navigation />
