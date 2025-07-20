@@ -12,11 +12,14 @@ import { cn } from '@/lib/utils';
 import Navigation from '@/components/Navigation';
 import StepsTracker from '@/components/StepsTracker';
 import ActivityChart from '@/components/ActivityChart';
+import GoalSettingDialog from '@/components/GoalSettingDialog';
 import { useHealthSync } from '@/hooks/useHealthSync';
+import { useAuth } from '@/hooks/useAuth';
+import { goalService } from '@/services/goalService';
 
 interface ActivityGoal {
   id: string;
-  type: 'steps' | 'exercise' | 'duration';
+  type: 'steps' | 'cardio' | 'strength';
   title: string;
   target: number;
   current: number;
@@ -34,6 +37,7 @@ interface ActivityRecommendation {
 }
 
 const PhysicalActivity = () => {
+  const { currentUserId } = useAuth();
   const { 
     isConnected, 
     isLoading, 
@@ -56,7 +60,7 @@ const PhysicalActivity = () => {
     },
     {
       id: '2',
-      type: 'exercise',
+      type: 'cardio',
       title: 'Weekly Cardio',
       target: 150,
       current: 90,
@@ -65,11 +69,11 @@ const PhysicalActivity = () => {
     },
     {
       id: '3',
-      type: 'duration',
+      type: 'strength',
       title: 'Strength Training',
       target: 2,
       current: 1,
-      unit: 'sessions/week',
+      unit: 'sessions',
       description: 'Complete 2 strength training sessions per week'
     }
   ]);
@@ -121,6 +125,31 @@ const PhysicalActivity = () => {
 
   // Rehabilitation visit state
   const [nextVisitDate, setNextVisitDate] = useState<Date | undefined>(undefined);
+
+  // Load user goals from database
+  const loadUserGoals = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const userGoals = await goalService.getUserGoals(currentUserId);
+      
+      setGoals(prev => prev.map(goal => {
+        const userGoal = userGoals.find(ug => ug.goal_type === goal.type);
+        if (userGoal) {
+          return { ...goal, target: userGoal.target_value };
+        }
+        return goal;
+      }));
+    } catch (error) {
+      console.error('Error loading user goals:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUserId) {
+      loadUserGoals();
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     if (isConnected) {
@@ -363,10 +392,15 @@ const PhysicalActivity = () => {
                       <p className="text-sm text-gray-600">{goal.description}</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Plus size={14} className="mr-1" />
-                        Set Goal
-                      </Button>
+                      <GoalSettingDialog 
+                        goalType={goal.type}
+                        onGoalUpdated={loadUserGoals}
+                      >
+                        <Button size="sm" variant="outline">
+                          <Plus size={14} className="mr-1" />
+                          Set Goal
+                        </Button>
+                      </GoalSettingDialog>
                       <Target className="text-blue-600" size={20} />
                     </div>
                   </div>
