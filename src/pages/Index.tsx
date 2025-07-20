@@ -255,7 +255,7 @@ const Index = () => {
   const quickStats = [
     { label: 'Days since MI', value: daysSinceMI.toString(), icon: Heart, link: '/health-journey' },
     { label: 'Medications today', value: `${takenCount}/${totalCount}`, icon: Calendar, link: '/medications' },
-    { label: 'Physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
+    { label: 'Rehabilitation and physical activity', value: '68%', icon: Activity, link: '/physical-activity' },
   ];
 
   const dailyTaskItems = [

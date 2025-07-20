@@ -164,7 +164,7 @@ const PhysicalActivity = () => {
             <Link to="/" className="mr-4">
               <ArrowLeft className="text-gray-600" size={24} />
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800">Physical Activity</h1>
+            <h1 className="text-xl font-semibold text-gray-800">Rehabilitation and Physical Activity</h1>
           </div>
         </div>
       </div>
