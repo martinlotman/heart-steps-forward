@@ -145,7 +145,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({ activityType, title }) =>
                         <ActivityIcon className={getActivityColor()} size={14} />
                         <div>
                           <div className="text-sm font-medium">
-                            {activity.notes?.split(' | ')[0] || `${activityType} workout`}
+                            {activity.exercise_name || `${activityType} workout`}
                           </div>
                           <div className="text-xs text-gray-600 flex items-center">
                             <Clock size={10} className="mr-1" />
@@ -154,7 +154,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({ activityType, title }) =>
                         </div>
                       </div>
                       <Badge variant="outline" className="text-xs">
-                        {activity.value} {activity.unit}
+                        {activity.duration_minutes ? `${activity.duration_minutes} min` : `${activity.value} ${activity.unit}`}
                       </Badge>
                     </div>
                   ))}

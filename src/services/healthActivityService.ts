@@ -25,7 +25,10 @@ export const healthActivityService = {
           unit: activity.unit,
           start_date: activity.startDate.toISOString(),
           end_date: activity.endDate.toISOString(),
-          source: activity.source
+          source: activity.source,
+          exercise_name: activity.exerciseName,
+          duration_minutes: activity.duration,
+          notes: activity.notes
         });
 
       if (error) throw error;
@@ -45,7 +48,10 @@ export const healthActivityService = {
         unit: activity.unit,
         start_date: activity.startDate.toISOString(),
         end_date: activity.endDate.toISOString(),
-        source: activity.source
+        source: activity.source,
+        exercise_name: activity.exerciseName,
+        duration_minutes: activity.duration,
+        notes: activity.notes
       }));
 
       const { error } = await supabase

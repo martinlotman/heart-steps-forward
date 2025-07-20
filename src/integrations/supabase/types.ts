@@ -126,8 +126,11 @@ export type Database = {
         Row: {
           activity_type: string
           created_at: string
+          duration_minutes: number | null
           end_date: string
+          exercise_name: string | null
           id: string
+          notes: string | null
           source: string
           start_date: string
           unit: string
@@ -137,8 +140,11 @@ export type Database = {
         Insert: {
           activity_type: string
           created_at?: string
+          duration_minutes?: number | null
           end_date: string
+          exercise_name?: string | null
           id?: string
+          notes?: string | null
           source: string
           start_date: string
           unit: string
@@ -148,8 +154,11 @@ export type Database = {
         Update: {
           activity_type?: string
           created_at?: string
+          duration_minutes?: number | null
           end_date?: string
+          exercise_name?: string | null
           id?: string
+          notes?: string | null
           source?: string
           start_date?: string
           unit?: string
