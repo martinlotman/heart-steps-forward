@@ -56,7 +56,8 @@ export const NotificationPreferencesDialog = ({
       }
 
       if (data && data.notification_preferences) {
-        setPreferences(data.notification_preferences);
+        const prefs = data.notification_preferences as unknown as NotificationPreferences;
+        setPreferences(prefs);
       }
     } catch (error) {
       console.error('Error loading notification preferences:', error);
@@ -72,7 +73,7 @@ export const NotificationPreferencesDialog = ({
         .from('user_preferences')
         .upsert({
           user_id: user.id,
-          notification_preferences: preferences,
+          notification_preferences: preferences as any,
         });
 
       if (error) {
