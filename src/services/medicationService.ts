@@ -136,7 +136,42 @@ class MedicationService {
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
 
-    return this.getMedicationIntakes(userId, startOfDay, endOfDay);
+    // First, try to get existing intakes for today
+    let intakes = await this.getMedicationIntakes(userId, startOfDay, endOfDay);
+    
+    // If no intakes exist for today, generate them for active medications
+    if (intakes.length === 0) {
+      const activeMedications = await this.getUserMedications(userId);
+      
+      for (const medication of activeMedications) {
+        // Check if medication should be active today
+        const medicationStartDate = new Date(medication.start_date);
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        if (medicationStartDate <= todayDate && 
+            (!medication.end_date || new Date(medication.end_date) >= todayDate)) {
+          
+          // Generate intakes for today only
+          const todayIntakes = this.generateScheduledIntakes(medication, 1);
+          
+          // Filter to only today's intakes and create them
+          const todayIntakesToCreate = todayIntakes.filter(intake => {
+            const intakeDate = new Date(intake.scheduled_time);
+            return intakeDate >= new Date(startOfDay) && intakeDate < new Date(endOfDay);
+          });
+          
+          // Create the missing intakes
+          for (const intakeData of todayIntakesToCreate) {
+            await this.createMedicationIntake(intakeData);
+          }
+        }
+      }
+      
+      // Fetch the newly created intakes
+      intakes = await this.getMedicationIntakes(userId, startOfDay, endOfDay);
+    }
+
+    return intakes;
   }
 
   async createMedicationIntake(intakeData: CreateIntakeData): Promise<MedicationIntake> {
