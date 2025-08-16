@@ -1,5 +1,5 @@
 
-import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle } from 'lucide-react';
+import { ArrowLeft, User, Settings, Bell, Shield, HelpCircle, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { profileService } from '@/services/profileService';
 import { ManageDataDialog } from '@/components/ManageDataDialog';
 import { NotificationPreferencesDialog } from '@/components/NotificationPreferencesDialog';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { useState, useEffect } from 'react';
 
 const Profile = () => {
@@ -139,6 +140,20 @@ const Profile = () => {
               </CardContent>
             </Card>
           ))}
+          
+          {/* Language Settings */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <Globe className="text-gray-500 mr-4" size={24} />
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-800">Language</h3>
+                  <p className="text-sm text-gray-500">Choose your preferred language</p>
+                </div>
+                <LanguageSelector />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
