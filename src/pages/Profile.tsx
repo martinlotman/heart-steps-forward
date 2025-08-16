@@ -10,10 +10,12 @@ import { profileService } from '@/services/profileService';
 import { ManageDataDialog } from '@/components/ManageDataDialog';
 import { NotificationPreferencesDialog } from '@/components/NotificationPreferencesDialog';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { useTranslations } from '@/hooks/useTranslations';
 import { useState, useEffect } from 'react';
 
 const Profile = () => {
   const { user } = useAuth();
+  const { t } = useTranslations();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
   const [showManageData, setShowManageData] = useState(false);
@@ -85,11 +87,11 @@ const Profile = () => {
   const userInitials = getInitials(userName);
 
   const menuItems = [
-    { icon: Bell, title: 'Notifications', description: 'Manage your medication reminders', onClick: () => setShowNotificationPrefs(true) },
-    { icon: User, title: 'Personal Info', description: 'Update your health information', onClick: () => setShowManageData(true) },
-    { icon: Shield, title: 'Emergency Contacts', description: 'Manage your emergency contacts' },
-    { icon: Settings, title: 'Settings', description: 'App preferences and privacy' },
-    { icon: HelpCircle, title: 'Help & Support', description: 'Get help and contact support' },
+    { icon: Bell, title: t('profile.notifications'), description: t('profile.notifications_desc'), onClick: () => setShowNotificationPrefs(true) },
+    { icon: User, title: t('profile.personal_info'), description: t('profile.personal_info_desc'), onClick: () => setShowManageData(true) },
+    { icon: Shield, title: t('profile.emergency_contacts'), description: t('profile.emergency_contacts_desc') },
+    { icon: Settings, title: t('profile.settings'), description: t('profile.settings_desc') },
+    { icon: HelpCircle, title: t('profile.help_support'), description: t('profile.help_support_desc') },
   ];
 
   return (
@@ -100,7 +102,7 @@ const Profile = () => {
             <Link to="/" className="mr-4">
               <ArrowLeft className="text-gray-600" size={24} />
             </Link>
-            <h1 className="text-xl font-semibold text-gray-800">Profile</h1>
+            <h1 className="text-xl font-semibold text-gray-800">{t('profile.title')}</h1>
           </div>
         </div>
       </div>
@@ -115,8 +117,8 @@ const Profile = () => {
             </Avatar>
             <div>
               <h2 className="text-xl font-semibold text-gray-800">{userName}</h2>
-              <p className="text-gray-600">Recovery Day {daysSinceMI}</p>
-              <p className="text-sm text-green-600 font-medium">Excellent Progress!</p>
+              <p className="text-gray-600">{t('profile.recovery_day')} {daysSinceMI}</p>
+              <p className="text-sm text-green-600 font-medium">{t('profile.excellent_progress')}</p>
             </div>
           </div>
         </div>
@@ -147,8 +149,8 @@ const Profile = () => {
               <div className="flex items-center">
                 <Globe className="text-gray-500 mr-4" size={24} />
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-800">Language</h3>
-                  <p className="text-sm text-gray-500">Choose your preferred language</p>
+                  <h3 className="font-medium text-gray-800">{t('profile.language')}</h3>
+                  <p className="text-sm text-gray-500">{t('profile.language_desc')}</p>
                 </div>
                 <LanguageSelector />
               </div>

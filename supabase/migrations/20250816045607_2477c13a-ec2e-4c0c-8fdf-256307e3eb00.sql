@@ -1,0 +1,18 @@
+-- Add missing translations for the Profile page
+INSERT INTO translations (key, en, et, ru, category) VALUES
+('profile.title', 'Profile', 'Profiil', 'Профиль', 'navigation'),
+('profile.recovery_day', 'Recovery Day', 'Taastumispäev', 'День восстановления', 'profile'),
+('profile.excellent_progress', 'Excellent Progress!', 'Suurepärane progress!', 'Отличный прогресс!', 'profile'),
+('profile.notifications', 'Notifications', 'Teavitused', 'Уведомления', 'profile'),
+('profile.notifications_desc', 'Manage your medication reminders', 'Halda oma ravimi meeldetuletusi', 'Управление напоминаниями о лекарствах', 'profile'),
+('profile.personal_info', 'Personal Info', 'Isiklik info', 'Личная информация', 'profile'),
+('profile.personal_info_desc', 'Update your health information', 'Uuenda oma terviseinformatsiooni', 'Обновить медицинскую информацию', 'profile'),
+('profile.emergency_contacts', 'Emergency Contacts', 'Hädaabikontaktid', 'Экстренные контакты', 'profile'),
+('profile.emergency_contacts_desc', 'Manage your emergency contacts', 'Halda oma hädaabikontakte', 'Управление экстренными контактами', 'profile'),
+('profile.settings', 'Settings', 'Seaded', 'Настройки', 'profile'),
+('profile.settings_desc', 'App preferences and privacy', 'Rakenduse eelistused ja privaatsus', 'Настройки приложения и конфиденциальность', 'profile'),
+('profile.help_support', 'Help & Support', 'Abi ja tugi', 'Помощь и поддержка', 'profile'),
+('profile.help_support_desc', 'Get help and contact support', 'Saa abi ja võta ühendust toega', 'Получить помощь и связаться с поддержкой', 'profile'),
+('profile.language', 'Language', 'Keel', 'Язык', 'profile'),
+('profile.language_desc', 'Choose your preferred language', 'Vali oma eelistatud keel', 'Выберите предпочитаемый язык', 'profile'),
+('navigation.home', 'Home', 'Avaleht', 'Главная', 'navigation');

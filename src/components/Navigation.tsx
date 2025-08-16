@@ -1,16 +1,18 @@
 
 import { Heart, Home, Calendar, BookOpen, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslations } from '@/hooks/useTranslations';
 
 const Navigation = () => {
   const location = useLocation();
+  const { t } = useTranslations();
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/medications', icon: Calendar, label: 'Meds' },
-    { path: '/health', icon: Heart, label: 'Health' },
-    { path: '/education', icon: BookOpen, label: 'Learn' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/', icon: Home, label: t('navigation.home') },
+    { path: '/medications', icon: Calendar, label: t('nav.medications') },
+    { path: '/health', icon: Heart, label: t('nav.health') },
+    { path: '/education', icon: BookOpen, label: t('nav.education') },
+    { path: '/profile', icon: User, label: t('nav.profile') },
   ];
 
   return (
