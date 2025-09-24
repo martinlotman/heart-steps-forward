@@ -71,6 +71,11 @@ const Auth = () => {
             title: "Account created successfully!",
             description: "Please check your email and click the confirmation link to complete your registration.",
           });
+          // Auto-switch to sign in after showing success message
+          setTimeout(() => {
+            setSignupSuccess(false);
+            setIsSignUp(false);
+          }, 3000);
         }
       } else {
         const { error } = await signIn(email, password);
