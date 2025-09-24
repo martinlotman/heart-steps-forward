@@ -1,10 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useJourneyData } from '@/hooks/useJourneyData';
+import { useToast } from '@/hooks/use-toast';
+import { streakService } from '@/services/streakService';
 import JourneyHeader from '@/components/journey/JourneyHeader';
 import JourneyStats from '@/components/journey/JourneyStats';
 import JourneyTimeline from '@/components/journey/JourneyTimeline';
@@ -24,8 +26,9 @@ interface DayProgress {
 
 const HealthJourney = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedDay, setSelectedDay] = useState<DayProgress | null>(null);
-  const { journeyData, daysSinceMI, loading } = useJourneyData(user?.id);
+  const { journeyData, daysSinceMI, streakInfo, loading } = useJourneyData(user?.id);
 
   const completeDays = journeyData.filter(day => day.status === 'complete').length;
   const partialDays = journeyData.filter(day => day.status === 'partial').length;
@@ -39,6 +42,50 @@ const HealthJourney = () => {
   const closeModal = () => {
     setSelectedDay(null);
   };
+
+  // Handle streak notifications
+  useEffect(() => {
+    if (!user?.id || loading) return;
+
+    const checkAndShowNotifications = async () => {
+      // Check for streak achievement notification
+      if (streakService.shouldShowStreakAchievement(streakInfo)) {
+        const hasShownAchievement = await streakService.hasShownNotificationToday(user.id, 'achievement');
+        
+        if (!hasShownAchievement) {
+          const message = streakService.getStreakMessage(streakInfo);
+          if (message) {
+            toast({
+              title: "Streak Achievement! 🔥",
+              description: message,
+              duration: 6000,
+            });
+            await streakService.markNotificationShown(user.id, 'achievement');
+          }
+        }
+      }
+
+      // Check for streak warning notification  
+      if (streakService.shouldShowStreakWarning(streakInfo)) {
+        const hasShownWarning = await streakService.hasShownNotificationToday(user.id, 'warning');
+        
+        if (!hasShownWarning) {
+          const message = streakService.getStreakMessage(streakInfo);
+          if (message) {
+            toast({
+              title: "Streak Alert! ⚠️",
+              description: message,
+              variant: "destructive",
+              duration: 8000,
+            });
+            await streakService.markNotificationShown(user.id, 'warning');
+          }
+        }
+      }
+    };
+
+    checkAndShowNotifications();
+  }, [user?.id, streakInfo, loading, toast]);
 
   if (loading) {
     return (
@@ -66,6 +113,7 @@ const HealthJourney = () => {
           completeDays={completeDays}
           partialDays={partialDays}
           incompleteDays={incompleteDays}
+          streakInfo={streakInfo}
         />
 
         <JourneyTimeline 

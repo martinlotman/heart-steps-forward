@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { profileService } from '@/services/profileService';
 import { healthMetricsService } from '@/services/healthMetricsService';
 import { supabase } from '@/integrations/supabase/client';
+import { streakService, type StreakInfo } from '@/services/streakService';
 
 interface DayProgress {
   day: number;
@@ -18,6 +19,13 @@ export const useJourneyData = (userId: string | undefined) => {
   const [journeyData, setJourneyData] = useState<DayProgress[]>([]);
   const [miDate, setMiDate] = useState<Date | null>(null);
   const [daysSinceMI, setDaysSinceMI] = useState<number>(0);
+  const [streakInfo, setStreakInfo] = useState<StreakInfo>({
+    currentStreak: 0,
+    longestStreak: 0,
+    isOnStreak: false,
+    isToday: false,
+    todayCompleted: false
+  });
   const [loading, setLoading] = useState(true);
 
   const generateJourneyData = async (miDate: Date, userId: string) => {
@@ -94,6 +102,10 @@ export const useJourneyData = (userId: string | undefined) => {
     }
     
     setJourneyData(data);
+    
+    // Calculate streak information
+    const calculatedStreakInfo = streakService.calculateStreak(data);
+    setStreakInfo(calculatedStreakInfo);
   };
 
   useEffect(() => {
@@ -142,6 +154,7 @@ export const useJourneyData = (userId: string | undefined) => {
     journeyData,
     miDate,
     daysSinceMI,
+    streakInfo,
     loading
   };
 };
