@@ -64,51 +64,50 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
-        if (error) {
-          if (error.message.includes('User already registered')) {
+        const result: any = await signUp(email, password);
+        
+        if (result.error) {
+          if (result.error.message.includes('User already registered')) {
             toast({
               title: "Account exists",
               description: "This email is already registered. Try signing in instead.",
               variant: "destructive"
             });
             setIsSignUp(false);
-          } else if (error.message.includes('rate limit') || error.message.includes('46 seconds')) {
+          } else if (result.error.message.includes('rate limit')) {
             toast({
               title: "Please wait",
               description: "Too many requests. Please wait a moment before trying again.",
               variant: "destructive"
             });
           } else {
-            throw error;
+            throw result.error;
           }
         } else {
-          // Check if user is already authenticated (email confirmation disabled)
-          // If so, the useEffect will handle redirect, no need for success screen
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            // Email confirmation is required - show success message
+          // Check if we got a session back (email confirmation disabled)
+          if (result.session) {
+            toast({
+              title: "Account created!",
+              description: "Welcome! Redirecting to onboarding...",
+            });
+            // Let useEffect handle redirect
+          } else {
+            // Email confirmation required
             setSignupSuccess(true);
             toast({
-              title: "Account created successfully!",
-              description: "Please check your email and click the confirmation link to complete your registration.",
-            });
-          } else {
-            // User is automatically logged in - show success and let redirect happen
-            toast({
-              title: "Account created successfully!",
-              description: "Redirecting you to complete your profile...",
+              title: "Check your email",
+              description: "Click the confirmation link we sent to continue.",
             });
           }
         }
       } else {
         const { error } = await signIn(email, password);
+        
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
             toast({
               title: "Invalid credentials",
-              description: "Please check your email and password and try again.",
+              description: "Please check your email and password.",
               variant: "destructive"
             });
           } else if (error.message.includes('Email not confirmed')) {
@@ -123,8 +122,9 @@ const Auth = () => {
         } else {
           toast({
             title: "Welcome back!",
-            description: "Successfully signed in.",
+            description: "Signed in successfully.",
           });
+          // Let useEffect handle redirect
         }
       }
     } catch (error: any) {

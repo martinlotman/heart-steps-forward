@@ -68,17 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      
-      // Clean up any existing auth state first
-      try {
-        await supabase.auth.signOut();
-        localStorage.removeItem('onboardingData');
-        localStorage.removeItem('onboardingComplete');
-      } catch (err) {
-        // Ignore cleanup errors
-      }
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -92,34 +81,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
       
-      if (data.user && !data.user.email_confirmed_at) {
-        console.log('SignUp successful - email confirmation required:', data.user.email);
-        return { error: null };
-      }
-      
-      console.log('SignUp successful:', data.user?.email);
-      return { error: null };
+      console.log('SignUp successful:', data.user?.email, 'Session:', !!data.session);
+      return { error: null, session: data.session, user: data.user };
     } catch (error) {
       console.error('SignUp exception:', error);
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      
-      // Clean up any existing auth state first
-      try {
-        await supabase.auth.signOut();
-        localStorage.removeItem('onboardingData');
-        localStorage.removeItem('onboardingComplete');
-      } catch (err) {
-        // Ignore cleanup errors
-      }
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -131,18 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log('SignIn successful:', data.user?.email);
-      
-      // Force a page reload to ensure clean state
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
-      
       return { error: null };
     } catch (error) {
       console.error('SignIn exception:', error);
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 
