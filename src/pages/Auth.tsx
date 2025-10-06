@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useToast } from '@/hooks/use-toast';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { authSchema } from '@/schemas/authSchema';
+import { z } from 'zod';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>({});
 
   // Redirect authenticated users
   useEffect(() => {
@@ -35,13 +37,27 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast({
-        title: "Missing information",
-        description: "Please enter both email and password",
-        variant: "destructive"
-      });
-      return;
+    setValidationErrors({});
+    
+    // Validate input using zod schema
+    try {
+      authSchema.parse({ email, password });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: { email?: string; password?: string } = {};
+        error.issues.forEach((issue) => {
+          if (issue.path[0] === 'email') errors.email = issue.message;
+          if (issue.path[0] === 'password') errors.password = issue.message;
+        });
+        setValidationErrors(errors);
+        
+        toast({
+          title: "Validation Error",
+          description: Object.values(errors)[0],
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -188,10 +204,17 @@ const Auth = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setValidationErrors(prev => ({ ...prev, email: undefined }));
+                  }}
                   placeholder={t('auth.email')}
                   required
+                  className={validationErrors.email ? "border-destructive" : ""}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-destructive mt-1">{validationErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -200,11 +223,22 @@ const Auth = () => {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setValidationErrors(prev => ({ ...prev, password: undefined }));
+                  }}
                   placeholder={t('auth.password')}
-                  minLength={6}
                   required
+                  className={validationErrors.password ? "border-destructive" : ""}
                 />
+                {validationErrors.password && (
+                  <p className="text-sm text-destructive mt-1">{validationErrors.password}</p>
+                )}
+                {isSignUp && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Must be at least 8 characters with uppercase, lowercase, and number
+                  </p>
+                )}
               </div>
 
               <Button 

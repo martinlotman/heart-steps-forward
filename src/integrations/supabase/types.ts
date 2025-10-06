@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_impersonation_sessions: {
+        Row: {
+          admin_user_id: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          impersonated_user_id: string
+          reason: string | null
+          started_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          impersonated_user_id: string
+          reason?: string | null
+          started_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          impersonated_user_id?: string
+          reason?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          resource_accessed: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          resource_accessed?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          resource_accessed?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           created_at: string
@@ -460,6 +520,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          consent_type: string
+          consented: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          consent_type: string
+          consented?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          consent_type?: string
+          consented?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_goals: {
         Row: {
           created_at: string
@@ -564,6 +654,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          _action: string
+          _ip_address?: string
+          _resource_accessed?: string
+          _user_agent?: string
+          _user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {

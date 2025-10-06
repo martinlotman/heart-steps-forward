@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import DOMPurify from 'dompurify';
 
 export interface SecurityAuditLog {
   action: string;
@@ -10,46 +11,40 @@ export interface SecurityAuditLog {
 }
 
 export const dataSecurityService = {
-  // Log security-relevant actions
+  // Log security-relevant actions using secure database storage
   async logSecurityEvent(event: Omit<SecurityAuditLog, 'timestamp'>) {
     try {
-      // In a production environment, this would go to a secure audit log
-      console.log('Security Event:', {
-        ...event,
-        timestamp: new Date().toISOString()
+      const { data, error } = await supabase.rpc('log_audit_event', {
+        _user_id: event.userId,
+        _action: event.action,
+        _resource_accessed: event.resourceAccessed || null,
+        _ip_address: event.ipAddress || null,
+        _user_agent: event.userAgent || null
       });
-      
-      // Store in localStorage for demonstration (in production, use secure backend)
-      const existingLogs = localStorage.getItem('securityAuditLogs');
-      const logs = existingLogs ? JSON.parse(existingLogs) : [];
-      logs.push({
-        ...event,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Keep only last 100 logs
-      if (logs.length > 100) {
-        logs.splice(0, logs.length - 100);
+
+      if (error) {
+        console.error('Failed to log security event:', error);
       }
-      
-      localStorage.setItem('securityAuditLogs', JSON.stringify(logs));
+
+      return data;
     } catch (error) {
       console.error('Failed to log security event:', error);
     }
   },
 
-  // Validate data before processing
+  // Validate data before processing using proper sanitization library
   sanitizeHealthData(data: any): any {
-    // Remove any potential XSS or injection attempts
     const sanitized = { ...data };
     
     Object.keys(sanitized).forEach(key => {
       if (typeof sanitized[key] === 'string') {
-        // Basic sanitization - in production, use a proper sanitization library
-        sanitized[key] = sanitized[key]
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-          .replace(/javascript:/gi, '')
-          .replace(/on\w+\s*=/gi, '');
+        // Use DOMPurify for proper XSS prevention
+        // Strip all HTML tags for health data as we don't need formatting
+        sanitized[key] = DOMPurify.sanitize(sanitized[key], {
+          ALLOWED_TAGS: [],
+          ALLOWED_ATTR: [],
+          KEEP_CONTENT: true
+        }).trim();
       }
     });
     
@@ -59,43 +54,24 @@ export const dataSecurityService = {
   // Check for suspicious activity patterns
   async checkForSuspiciousActivity(userId: string): Promise<boolean> {
     try {
-      const logs = localStorage.getItem('securityAuditLogs');
-      if (!logs) return false;
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
       
-      const auditLogs: SecurityAuditLog[] = JSON.parse(logs);
-      const userLogs = auditLogs.filter(log => log.userId === userId);
-      const recentLogs = userLogs.filter(log => 
-        new Date(log.timestamp).getTime() > Date.now() - 60000 // Last minute
-      );
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', oneMinuteAgo);
+
+      if (error) {
+        console.error('Error checking suspicious activity:', error);
+        return false;
+      }
       
       // Flag if more than 10 actions in the last minute
-      return recentLogs.length > 10;
+      return (data?.length || 0) > 10;
     } catch (error) {
       console.error('Error checking suspicious activity:', error);
       return false;
-    }
-  },
-
-  // Encrypt sensitive data before storage (simplified version)
-  encryptSensitiveData(data: string): string {
-    // In production, use proper encryption library like crypto-js
-    // This is a simple base64 encoding for demonstration
-    try {
-      return btoa(data);
-    } catch (error) {
-      console.error('Encryption failed:', error);
-      return data;
-    }
-  },
-
-  // Decrypt sensitive data after retrieval
-  decryptSensitiveData(encryptedData: string): string {
-    // In production, use proper decryption
-    try {
-      return atob(encryptedData);
-    } catch (error) {
-      console.error('Decryption failed:', error);
-      return encryptedData;
     }
   },
 

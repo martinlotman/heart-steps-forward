@@ -11,136 +11,241 @@ export interface ConsentRecord {
 }
 
 export const complianceService = {
-  // Record user consent for GDPR compliance
-  async recordConsent(userId: string, consents: Record<string, boolean>) {
+  // Record user consent in secure database storage
+  async recordConsent(userId: string, consents: Record<string, boolean>): Promise<boolean> {
     try {
       await dataSecurityService.logSecurityEvent({
-        action: 'CONSENT_RECORDED',
-        userId,
-        resourceAccessed: 'user_consent'
+        action: 'CONSENT_UPDATED',
+        userId: userId,
+        resourceAccessed: 'user_consents'
       });
 
-      // Store consent records
+      const version = '1.0';
       const consentRecords = Object.entries(consents).map(([type, consented]) => ({
         user_id: userId,
         consent_type: type,
         consented,
-        timestamp: new Date().toISOString(),
-        version: '1.0'
+        version
       }));
 
-      // In production, this would be stored in a secure database table
-      localStorage.setItem(`user_consent_${userId}`, JSON.stringify(consentRecords));
-      
+      const { error } = await supabase
+        .from('user_consents')
+        .upsert(consentRecords, {
+          onConflict: 'user_id,consent_type',
+          ignoreDuplicates: false
+        });
+
+      if (error) {
+        console.error('Error recording consents:', error);
+        return false;
+      }
+
       return true;
     } catch (error) {
-      console.error('Failed to record consent:', error);
-      throw error;
-    }
-  },
-
-  // Check if user has given required consents
-  async hasValidConsent(userId: string, consentType: string): Promise<boolean> {
-    try {
-      const storedConsents = localStorage.getItem(`user_consent_${userId}`);
-      if (!storedConsents) return false;
-
-      const consents: ConsentRecord[] = JSON.parse(storedConsents);
-      const consent = consents.find(c => c.consentType === consentType);
-      
-      return consent?.consented || false;
-    } catch (error) {
-      console.error('Failed to check consent:', error);
+      console.error('Error recording consents:', error);
       return false;
     }
   },
 
-  // Handle data subject rights requests (GDPR)
-  async handleDataRequest(userId: string, requestType: 'access' | 'delete' | 'export'): Promise<any> {
+  // Validate if user has given consent
+  async hasValidConsent(userId: string, consentType: string): Promise<boolean> {
     try {
-      await dataSecurityService.logSecurityEvent({
-        action: `DATA_REQUEST_${requestType.toUpperCase()}`,
-        userId,
-        resourceAccessed: 'user_data'
-      });
+      const { data, error } = await supabase
+        .from('user_consents')
+        .select('consented')
+        .eq('user_id', userId)
+        .eq('consent_type', consentType)
+        .maybeSingle();
 
-      switch (requestType) {
-        case 'access':
-          return await this.exportUserData(userId);
-        case 'delete':
-          return await this.deleteUserData(userId);
-        case 'export':
-          return await this.exportUserData(userId);
-        default:
-          throw new Error('Invalid request type');
+      if (error) {
+        console.error('Error checking consent:', error);
+        return false;
       }
+
+      return data?.consented || false;
     } catch (error) {
-      console.error('Failed to handle data request:', error);
-      throw error;
+      console.error('Error checking consent:', error);
+      return false;
     }
   },
 
-  // Export all user data (GDPR compliance)
-  async exportUserData(userId: string) {
+  // Handle data subject rights requests (GDPR compliance)
+  async handleDataRequest(
+    userId: string,
+    requestType: 'access' | 'delete' | 'export'
+  ): Promise<any> {
+    await dataSecurityService.logSecurityEvent({
+      action: `DATA_REQUEST_${requestType.toUpperCase()}`,
+      userId: userId,
+      resourceAccessed: 'gdpr_data_request'
+    });
+
+    switch (requestType) {
+      case 'export':
+        return this.exportUserData(userId);
+      case 'delete':
+        return this.deleteUserData(userId);
+      case 'access':
+        return this.exportUserData(userId);
+      default:
+        throw new Error('Invalid request type');
+    }
+  },
+
+  // Export all user data (GDPR right to data portability)
+  async exportUserData(userId: string): Promise<any> {
     try {
-      const userData = {
-        profile: await supabase.from('profiles').select('*').eq('user_id', userId),
-        healthActivities: await supabase.from('health_activities').select('*').eq('user_id', userId),
-        dailyTasks: await supabase.from('daily_tasks').select('*').eq('user_id', userId),
-        gppaqResponses: await supabase.from('gppaq_responses').select('*').eq('user_id', userId),
-        eq5d5lResponses: await supabase.from('eq5d5l_responses').select('*').eq('user_id', userId),
-        healthJourney: await supabase.from('health_journey').select('*').eq('user_id', userId),
-        consents: localStorage.getItem(`user_consent_${userId}`)
+      const userData: Record<string, any> = {};
+
+      // Fetch profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId);
+      if (profiles) userData.profiles = profiles;
+
+      // Fetch health_metrics
+      const { data: healthMetrics } = await supabase
+        .from('health_metrics')
+        .select('*')
+        .eq('user_id', userId);
+      if (healthMetrics) userData.health_metrics = healthMetrics;
+
+      // Fetch medications
+      const { data: medications } = await supabase
+        .from('medications')
+        .select('*')
+        .eq('user_id', userId);
+      if (medications) userData.medications = medications;
+
+      // Fetch medication_intakes
+      const { data: medicationIntakes } = await supabase
+        .from('medication_intakes')
+        .select('*')
+        .eq('user_id', userId);
+      if (medicationIntakes) userData.medication_intakes = medicationIntakes;
+
+      // Fetch health_activities
+      const { data: healthActivities } = await supabase
+        .from('health_activities')
+        .select('*')
+        .eq('user_id', userId);
+      if (healthActivities) userData.health_activities = healthActivities;
+
+      // Fetch daily_tasks
+      const { data: dailyTasks } = await supabase
+        .from('daily_tasks')
+        .select('*')
+        .eq('user_id', userId);
+      if (dailyTasks) userData.daily_tasks = dailyTasks;
+
+      // Fetch user_goals
+      const { data: userGoals } = await supabase
+        .from('user_goals')
+        .select('*')
+        .eq('user_id', userId);
+      if (userGoals) userData.user_goals = userGoals;
+
+      // Fetch therapeutic_goals
+      const { data: therapeuticGoals } = await supabase
+        .from('therapeutic_goals')
+        .select('*')
+        .eq('user_id', userId);
+      if (therapeuticGoals) userData.therapeutic_goals = therapeuticGoals;
+
+      // Fetch health_journey
+      const { data: healthJourney } = await supabase
+        .from('health_journey')
+        .select('*')
+        .eq('user_id', userId);
+      if (healthJourney) userData.health_journey = healthJourney;
+
+      // Fetch eq5d5l_responses
+      const { data: eq5d5lResponses } = await supabase
+        .from('eq5d5l_responses')
+        .select('*')
+        .eq('user_id', userId);
+      if (eq5d5lResponses) userData.eq5d5l_responses = eq5d5lResponses;
+
+      // Fetch gppaq_responses
+      const { data: gppaqResponses } = await supabase
+        .from('gppaq_responses')
+        .select('*')
+        .eq('user_id', userId);
+      if (gppaqResponses) userData.gppaq_responses = gppaqResponses;
+
+      // Fetch user_preferences
+      const { data: userPreferences } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId);
+      if (userPreferences) userData.user_preferences = userPreferences;
+
+      // Fetch user_consents
+      const { data: userConsents } = await supabase
+        .from('user_consents')
+        .select('*')
+        .eq('user_id', userId);
+      if (userConsents) userData.user_consents = userConsents;
+
+      return {
+        userId,
+        exportDate: new Date().toISOString(),
+        data: userData
       };
-
-      return userData;
     } catch (error) {
-      console.error('Failed to export user data:', error);
+      console.error('Error exporting user data:', error);
       throw error;
     }
   },
 
-  // Delete all user data (GDPR compliance)
-  async deleteUserData(userId: string) {
+  // Delete all user data (GDPR right to erasure)
+  async deleteUserData(userId: string): Promise<{ success: boolean }> {
     try {
-      // Delete from all tables
-      await Promise.all([
-        supabase.from('profiles').delete().eq('user_id', userId),
-        supabase.from('health_activities').delete().eq('user_id', userId),
-        supabase.from('daily_tasks').delete().eq('user_id', userId),
-        supabase.from('gppaq_responses').delete().eq('user_id', userId),
-        supabase.from('eq5d5l_responses').delete().eq('user_id', userId),
-        supabase.from('health_journey').delete().eq('user_id', userId)
-      ]);
+      // Delete in order to avoid foreign key constraints
+      await supabase.from('medication_intakes').delete().eq('user_id', userId);
+      await supabase.from('medications').delete().eq('user_id', userId);
+      await supabase.from('health_activities').delete().eq('user_id', userId);
+      await supabase.from('health_metrics').delete().eq('user_id', userId);
+      await supabase.from('daily_tasks').delete().eq('user_id', userId);
+      await supabase.from('user_goals').delete().eq('user_id', userId);
+      await supabase.from('therapeutic_goals').delete().eq('user_id', userId);
+      await supabase.from('health_journey').delete().eq('user_id', userId);
+      await supabase.from('eq5d5l_responses').delete().eq('user_id', userId);
+      await supabase.from('gppaq_responses').delete().eq('user_id', userId);
+      await supabase.from('user_preferences').delete().eq('user_id', userId);
+      await supabase.from('user_consents').delete().eq('user_id', userId);
+      await supabase.from('profiles').delete().eq('user_id', userId);
 
-      // Remove local storage data
-      localStorage.removeItem(`user_consent_${userId}`);
-      localStorage.removeItem('onboardingData');
-      localStorage.removeItem('onboardingComplete');
+      await dataSecurityService.logSecurityEvent({
+        action: 'USER_DATA_DELETED',
+        userId: userId,
+        resourceAccessed: 'all_user_tables'
+      });
 
       return { success: true };
     } catch (error) {
-      console.error('Failed to delete user data:', error);
-      throw error;
+      console.error('Error deleting user data:', error);
+      return { success: false };
     }
   },
 
-  // Validate FDA compliance for health recommendations
+  // Validate health recommendations for FDA compliance
   validateHealthRecommendation(recommendation: string): boolean {
-    // Check for medical claims that might require FDA approval
     const regulatedClaims = [
-      'cure', 'treat', 'prevent', 'diagnose', 'heal',
-      'therapeutic', 'medical treatment', 'clinical'
+      /cure|cures|curing/i,
+      /treat|treats|treatment for/i,
+      /diagnose|diagnosis/i,
+      /prevent|prevents|prevention of/i,
+      /disease/i,
+      /medical condition/i
     ];
 
-    const lowerRec = recommendation.toLowerCase();
-    const containsRegulatedClaim = regulatedClaims.some(claim => 
-      lowerRec.includes(claim)
-    );
-
-    if (containsRegulatedClaim) {
-      console.warn('Recommendation contains regulated medical claims:', recommendation);
-      return false;
+    for (const pattern of regulatedClaims) {
+      if (pattern.test(recommendation)) {
+        console.warn('Health recommendation contains regulated medical claims');
+        return false;
+      }
     }
 
     return true;
