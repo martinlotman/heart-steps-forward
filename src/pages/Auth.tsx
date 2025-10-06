@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { authSchema } from '@/schemas/authSchema';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -82,16 +83,24 @@ const Auth = () => {
             throw error;
           }
         } else {
-          setSignupSuccess(true);
-          toast({
-            title: "Account created successfully!",
-            description: "Please check your email and click the confirmation link to complete your registration.",
-          });
-          // Auto-switch to sign in after showing success message
-          setTimeout(() => {
-            setSignupSuccess(false);
-            setIsSignUp(false);
-          }, 3000);
+          // Check if user is already authenticated (email confirmation disabled)
+          // If so, the useEffect will handle redirect, no need for success screen
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            // Email confirmation is required - show success message
+            setSignupSuccess(true);
+            toast({
+              title: "Account created successfully!",
+              description: "Please check your email and click the confirmation link to complete your registration.",
+            });
+          } else {
+            // User is automatically logged in - show success and let redirect happen
+            toast({
+              title: "Account created successfully!",
+              description: "Redirecting you to complete your profile...",
+            });
+          }
         }
       } else {
         const { error } = await signIn(email, password);
