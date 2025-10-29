@@ -18,6 +18,13 @@ const config: CapacitorConfig = {
     CapacitorHealthData: {
       enableBackgroundDelivery: true,
     },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#0737a3',
+    },
+  },
+  ios: {
+    contentInset: 'always',
   },
 };
 
