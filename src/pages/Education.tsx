@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Play, Check, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Navigation from '@/components/Navigation';
 import DailyRecommendationCard from '@/components/DailyRecommendationCard';
 import TherapeuticGoalsTable from '@/components/TherapeuticGoalsTable';
@@ -93,6 +94,29 @@ const Education = () => {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
+        {/* AI Avatar Link */}
+        <a 
+          href="https://app.heygen.com/avatars" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block mb-6"
+        >
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop" alt="AI Avatar" />
+                  <AvatarFallback>AI</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800">Talk to Your AI Health Coach</p>
+                  <p className="text-sm text-gray-600">Click to interact with your personalized avatar</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </a>
+
         {/* Daily Tip */}
         <div className="mb-6">
           <div className="bg-blue-50 p-4 rounded-lg">
