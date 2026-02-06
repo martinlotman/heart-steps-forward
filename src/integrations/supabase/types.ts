@@ -637,7 +637,7 @@ export type Database = {
     }
     Functions: {
       get_all_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           age: number
           created_at: string
